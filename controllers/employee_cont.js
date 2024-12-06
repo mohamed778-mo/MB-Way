@@ -1,0 +1,548 @@
+const Employee = require("../models/employee_model");
+const Task =require("../models/task_model")
+const DoneTask =require("../models/done_task_upload")
+
+const bcryptjs = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const mongoose = require("mongoose");
+require("dotenv").config();
+
+
+const Register = async (req, res) => {
+  try {
+    const file = req.files?.find(f => f.fieldname === 'file');
+         let link ;
+       
+         if (file) {
+            link = `http://localhost:3000/uploads/${file.filename}`;
+        }else {link = null;}
+
+      
+    const user = req.body;
+    const duplicatedEmail = await Employee.findOne({ email: user.email });
+    if (duplicatedEmail) {
+      return res.status(400).send("Email already exist!!");
+    }
+    const newUser = new Employee({ ...user,photo:link});
+  
+    await newUser.save();
+
+    res.status(200).send("register is success please wait verfiy !!");
+  } catch (error) {
+    res.status(500).send(error.message);
+  }
+};
+
+
+const Login = async (req, res) => {
+  try {
+    
+    const { email, password } = req.body;
+    const user = await Employee.findOne({ email: email });
+    if (!user) {
+      return res.status(404).send("EMAIL OR PASSWORD NOT CORRECT ");
+    }
+    const check_block =user.isBlock;
+    if (check_block) {
+      return res.status(404).send("you are BLOCKED !!");
+    }
+    const verified =user.verified;
+    if (!verified) {
+      return res.status(400).send("please wait verfiy !!");
+    }
+    const isPassword = await bcryptjs.compare(password, user.password);
+    if (!isPassword) {
+      return res.status(404).send("EMAIL OR PASSWORD NOT CORRECT ");
+    }
+
+
+    const SECRETKEY = process.env.SECRETKEY;
+    const token =  jwt.sign({ id: user._id }, SECRETKEY);
+    res.cookie("access_token", `Bearer ${token}`, {
+      expires: new Date(Date.now() + 60 * 60 * 24 * 1024 * 300),
+      httpOnly: true,
+    });
+
+    user.tokens.push(token);
+    user.save();
+  
+    res
+      .status(200)
+      .send({ access_token: `Bearer ${token}`, success: "Login is success!" });
+  } catch (error) {
+    res.status(500).send("Server Error");
+  }
+};
+
+
+const editEmployeeData = async (req, res) => {
+  try {
+    const id = req.user._id;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(404).send("ID is not correct!!");
+    }
+    const data=await Employee.findById(id)
+    if (!data) {
+      return res.status(404).send("User not found!");
+    }
+    const check_block =data.isBlock;
+    if (check_block) {
+      return res.status(404).send("you are BLOCKED !!");
+    }
+    const file = req.files?.find(f => f.fieldname === 'file');
+        
+       
+         if (file) {
+          const link = `http://localhost:3000/uploads/${file.filename}`;
+          
+           await Employee.findByIdAndUpdate(id,{...req.body,photo:link, new: true })
+          await data.save();
+
+          return res.status(200).send("Data updated successfully!");
+
+      }
+
+  
+    await Employee.findByIdAndUpdate(id,{...req.body, new: true })
+
+    return res.status(200).send("Data updated successfully!");
+
+  } catch (e) {
+    res.status(500).send(e.message);
+  }
+};
+const manager_add_task = async (req, res) => {
+  try {
+     
+      const user_data = await Employee.findById(req.user._id);
+      const check_block =user_data.isBlock;
+      if (check_block) {
+         return res.status(404).send("you are BLOCKED !!");
+      }
+      if (!user_data.isManager) {
+          return res.status(400).send('You are not a manager!');
+      }
+
+      const { task_heading, section, task_description, from, to, employees_id } = req.body;
+
+     
+      const new_task = new Task({
+          task_heading,
+          section,
+          task_description,
+          from,
+          to,
+          employees_id,
+      });
+      await new_task.save();
+
+      
+      await Employee.updateMany(
+          { _id: { $in: employees_id } }, 
+          { $push: { task_notdone: new_task._id } } 
+      );
+
+      res.status(200).send('Task created and assigned successfully!');
+  } catch (e) {
+      res.status(500).send(e.message);
+  }
+};
+
+const update_task = async (req, res) => {
+  try {
+    const { push_employees_id, remove_employees_id, task_date, from, to, task_heading, task_description } = req.body;
+    const task_id = req.params.task_id;
+
+    const task = await Task.findById(task_id);
+    if (!task) {
+      return res.status(404).send('Task not found');
+    }
+
+    
+    if (push_employees_id) {
+      const existingEmployees = task.employees_id.filter((id) => push_employees_id.includes(id.toString()));
+
+      if (existingEmployees.length > 0) {
+        return res
+          .status(400)
+          .send(`Employee(s) with ID(s) ${existingEmployees.join(', ')} are already assigned to this task.`);
+      }
+
+    
+      await Task.findByIdAndUpdate(task_id, {
+        $addToSet: { employees_id: { $each: push_employees_id } },
+      });
+
+      
+      await Employee.updateMany(
+        { _id: { $in: push_employees_id } },
+        { $push: { task_notdone: task._id } }
+      );
+    }
+
+  
+    if (remove_employees_id) {
+      await Task.findByIdAndUpdate(task_id, {
+        $pull: { employees_id: { $in: remove_employees_id } },
+      });
+
+      await Employee.updateMany(
+        { _id: { $in: remove_employees_id } },
+        { $pull: { task_notdone: task._id } }
+      );
+    }
+
+   
+    if (task_date) task.task_date = task_date;
+    if (from) task.from = from;
+    if (to) task.to = to;
+    if (task_heading) task.task_heading = task_heading;
+    if (task_description) task.task_description = task_description;
+
+    await task.save();
+
+    res.status(200).send('Task updated successfully!');
+  } catch (e) {
+    console.error('Error:', e.message);
+    res.status(500).send(e.message);
+  }
+};
+
+
+const get_employee_tasks = async (req, res) => {
+  try {
+    const id = req.user._id;
+
+    
+    const employee_data = await Employee.findById(id).populate('task_notdone', 'task_heading');
+    
+    const check_block =employee_data.isBlock;
+    if (check_block) {
+      return res.status(404).send("you are BLOCKED !!");
+    }
+    
+    if (!employee_data) {
+      return res.status(404).send('Employee not found!');
+    }
+
+   
+    const tasks_id = employee_data.task_notdone.map(task => task._id);
+    const tasks_heading = employee_data.task_notdone.map(task => task.task_heading);
+
+   
+    res.status(200).send({ tasks_id, tasks_heading });
+  } catch (e) {
+    res.status(500).send(e.message);
+  }
+};
+
+
+
+const get_employee_det_task= async(req,res)=>{
+  try{
+ const task_id = req.params.task_id
+ const task_data = await Task.findById(task_id).select('-employees_id')
+
+ if (!task_data) {
+  return res.status(404).send('Task not found!');
+}
+
+ res.status(200).send(task_data)
+  }catch(e){res.status(500).send(e.message)}
+}
+
+
+const attach_employee_task = async (req, res) => {
+  try {
+    const file = req.files?.find(f => f.fieldname === 'file');
+    if (!file) {
+      return res.status(400).send('No file uploaded.');
+    }
+
+    const link = `http://localhost:3000/uploads/${file.filename}`;
+
+    const data_employee = await Employee.findById(req.user._id);
+    if (!data_employee) {
+      return res.status(404).send('Employee not found!');
+    }
+    const check_block =data_employee.isBlock;
+    if (check_block) {
+      return res.status(404).send("you are BLOCKED !!");
+    }
+
+    const task_id = req.params.task_id;
+    const task_data = await Task.findById(task_id);
+    if (!task_data) {
+      return res.status(404).send('Task not found!');
+    }
+
+    const check_doneTask = await DoneTask.findOne({ task_id: task_id });
+
+    if (!check_doneTask) {
+     
+      const new_LinkTask = new DoneTask({
+        task_heading: task_data.task_heading,
+        section: task_data.section,
+        from: task_data.from,
+        to: task_data.to,
+        task_id: task_id,
+        attachment: [
+          {
+            attach_time: new Date(),
+            link: link,
+            employee_id: req.user._id,
+            employee_name: data_employee.name,
+          },
+        ],
+      });
+      await new_LinkTask.save();
+    } else {
+   
+      check_doneTask.attachment.push({
+        attach_time: new Date(),
+        link: link,
+        employee_id: req.user._id,
+        employee_name: data_employee.name,
+      });
+      await check_doneTask.save();
+    }
+
+    data_employee.task_done.push(task_id);
+
+  
+    await Employee.updateOne(
+      { _id: req.user._id },
+      { $pull: { task_notdone: task_id } }
+    );
+
+    await data_employee.save();
+
+    await Task.updateOne(
+      { _id: task_id },
+      { $pull: { employees_id: req.user._id } }
+    );
+
+    const updatedTask = await Task.findById(task_id);
+    if (updatedTask && updatedTask.employees_id.length === 0) {
+      await Task.findByIdAndDelete(task_id);
+      console.log(`Task ${task_id} has been deleted as all employees completed it.`);
+    }
+
+    res.status(200).send('Attach task is successful.');
+  } catch (e) {
+    console.error(e);
+    res.status(500).send(e.message);
+  }
+};
+
+
+
+const get_all_done_tasks = async (req, res) => {
+  try {
+    const user_data = await Employee.findById(req.user._id);
+      
+    const check_block =user_data.isBlock;
+    if (check_block) {
+      return res.status(404).send("you are BLOCKED !!");
+    }
+    if (!user_data.isManager) {
+      return res.status(400).send('You are not a manager!');
+    }
+
+   const all_tasks = await DoneTask.find()
+   
+    res.status(200).send(all_tasks);
+  } catch (e) {
+    res.status(500).send(e.message);
+  }
+};
+
+const get_det_done_task = async (req, res) => {
+  try {
+    const task_id=req.params.task_id
+    const user_data = await Employee.findById(req.user._id);
+    const check_block =user_data.isBlock;
+    if (check_block) {
+      return res.status(404).send("you are BLOCKED !!");
+    }
+    if (!user_data.isManager) {
+      return res.status(400).send('You are not a manager!');
+    }
+
+   const done_task = await DoneTask.findById(task_id)
+   
+    res.status(200).send(done_task);
+  } catch (e) {
+    res.status(500).send(e.message);
+  }
+};
+
+const get_all_notdone_tasks = async (req, res) => {
+  try {
+    const user_data = await Employee.findById(req.user._id);
+    const check_block =user_data.isBlock;
+    if (check_block) {
+      return res.status(404).send("you are BLOCKED !!");
+    }
+    if (!user_data.isManager) {
+      return res.status(400).send('You are not a manager!');
+    }
+
+   const all_tasks = await Task.find()
+   
+    res.status(200).send(all_tasks);
+  } catch (e) {
+    res.status(500).send(e.message);
+  }
+};
+
+const get_det_notdone_task = async (req, res) => {
+  try {
+    const task_id=req.params.task_id
+    const user_data = await Employee.findById(req.user._id);
+    const check_block =user_data.isBlock;
+    if (check_block) {
+      return res.status(404).send("you are BLOCKED !!");
+    }
+    if (!user_data.isManager) {
+      return res.status(400).send('You are not a manager!');
+    }
+
+   const notdone_task = await Task.findById(task_id)
+   
+    res.status(200).send(notdone_task);
+  } catch (e) {
+    res.status(500).send(e.message);
+  }
+};
+
+const deleteTask = async (req, res) => {
+  try {
+
+    const user_data = await Employee.findById(req.user._id);
+
+    if (user_data.isBlock) {
+      return res.status(403).send("You are BLOCKED!");
+    }
+
+    if (!user_data.isManager) {
+      return res.status(403).send("You are not a manager!");
+    }
+
+    const taskId = req.params.task_id;
+
+    const task = await Task.findById(taskId);
+    if (!task) {
+      return res.status(404).send("Task not found!");
+    }
+
+    await Employee.updateMany(
+      { _id: { $in: task.employees_id } }, 
+      { $pull: { task_notdone: taskId } }  
+    );
+
+   
+    await Task.findByIdAndDelete(taskId);
+
+    res.status(200).send("Task deleted successfully.");
+  } catch (error) {
+    res.status(500).send(error.message);
+  }
+};
+
+
+
+const deleteDoneTask = async (req, res) => {
+  try {
+
+    const user_data = await Employee.findById(req.user._id);
+    const check_block =user_data.isBlock;
+    if (check_block) {
+      return res.status(404).send("you are BLOCKED !!");
+    }
+    if (!user_data.isManager) {
+      return res.status(400).send('You are not a manager!');
+    }
+    const  doneTaskId  = req.params.task_id;
+    
+    const doneTask = await DoneTask.findById(doneTaskId);
+    if (!doneTask) {
+      return res.status(404).send('DoneTask not found!');
+    }
+const employees_id = doneTask.employees_id
+    await Employee.updateMany(
+      { _id: { $in: employees_id} }, 
+      { $pull: { task_done: doneTaskId } }  
+    );
+    
+    await DoneTask.findByIdAndDelete(doneTaskId);
+
+    res.status(200).send('DoneTask deleted successfully.');
+  } catch (error) {
+    res.status(500).send(error.message);
+  }
+};
+
+const get_employees_ref_section =async(req, res) => {
+  try {
+    const user_data = await Employee.findById(req.user._id);
+
+    if (user_data.isBlock) {
+      return res.status(403).send("You are BLOCKED!");
+    }
+
+    if (!user_data.isManager) {
+      return res.status(403).send("You are not a manager!");
+    }
+    const section_name = req.body.section_name;
+    const sectionToLowerCase = section_name.toLowerCase();
+    const employees = await Employee.find({ section: sectionToLowerCase });
+
+    res.status(200).send(employees);
+  } catch (e) {
+    res.status(500).send(e.message);
+  }
+};
+
+
+const edit_in_employee_data = async(req, res)=> {
+  try {
+    const employee_id=req.params.employee_id;
+    const user_data = await Employee.findByIdAndUpdate(employee_id ,{...req.body, new: true });
+
+    if (!user_data) {
+      return res.status(404).send('Employee not found!');
+    }
+    await user_data.save();
+    res.status(200).send(user_data);
+  } catch (e) {
+    res.status(500).send(e.message);
+  }
+};
+
+module.exports = {
+    Register,
+    Login,
+    editEmployeeData,
+    //manager
+    manager_add_task,
+    update_task,
+    get_all_done_tasks,
+    get_det_done_task,
+    get_all_notdone_tasks,
+    get_det_notdone_task,
+    deleteTask,
+    deleteDoneTask,
+    get_employees_ref_section,
+    edit_in_employee_data,
+    //employee
+    get_employee_tasks,
+    get_employee_det_task,
+    attach_employee_task,
+   
+
+    
+}
+
+
+

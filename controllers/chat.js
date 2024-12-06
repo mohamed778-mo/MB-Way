@@ -1,0 +1,145 @@
+const Chat = require('../models/chat');
+const Admin = require('../models/admin_model');
+const Employee = require('../models/employee_model');
+
+
+const addMessage = async (req, res) => {
+    try {
+        const file = req.files?.find(f => f.fieldname === 'file');
+         let link ;
+
+         if (file) {
+            link = `http://localhost:3000/uploads/${file.filename}`;
+        }else{
+            link = null;
+        }
+
+       
+
+        const message  = req.body.message
+        
+
+        const senderId =req.params.senderId 
+        const receiverId =req.params.receiverId 
+
+        if (!senderId || !receiverId || (!message && !file)) {
+            return res.status(400).json({ message: 'Content or attachment is required.' });
+        }
+        let actuallySend; 
+        let actuallyReceived; 
+
+        let data_sender = await Admin.findById(senderId) || await Employee.findById(senderId)
+        let data_received = await Employee.findById(receiverId) || await Admin.findById(receiverId)
+
+    
+    actuallySend=data_sender
+    actuallyReceived=data_received
+        
+   
+
+if (!actuallySend || !actuallyReceived) {
+    return res.status(404).json({ message: 'Sender or receiver not found.' });
+}
+
+        const senderType = actuallySend.role
+        const receiverType = actuallyReceived.role
+        
+
+       
+        const newMessage = new Chat({
+            sender: senderId,
+            receiver: receiverId,
+            senderModel: senderType,
+            receiverModel: receiverType,
+            content: message,
+            attachment:link,
+        });
+
+        await newMessage.save();
+
+        res.status(201).json({ message: 'Message sent successfully!', data: newMessage });
+    
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Error sending message.', error });
+    }
+};
+
+
+
+const getMessages = async (req, res) => {
+    try {
+        const { userIdSender, userIdReceiver } = req.params;
+
+     
+        if (!userIdSender || !userIdReceiver) {
+            return res.status(400).json({ message: 'Both user IDs are required.' });
+        }
+
+       
+        const messages = await Chat.find({
+            $or: [
+                { sender: userIdSender, receiver: userIdReceiver },
+                { sender: userIdReceiver, receiver: userIdSender },
+            ],
+        }).sort({ timestamp: -1 }).skip((page - 1) * limit).limit(limit); 
+
+        res.status(200).json({ messages });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Error retrieving messages.', error });
+    }
+};
+
+const markMessagesAsRead = async (req, res) => {
+    try {
+        const { senderId, receiverId } = req.params;
+
+        if (!senderId || !receiverId) {
+            return res.status(400).json({ message: 'Both user IDs are required.' });
+        }
+
+        const result = await Chat.updateMany(
+            {
+                sender: senderId,
+                receiver: receiverId,
+                isRead: false,
+            },
+            {
+                $set: { isRead: true },
+            }
+        );
+
+        res.status(200).json({
+            message: 'Messages marked as read successfully.',
+            modifiedCount: result.modifiedCount,
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Error updating messages.', error });
+    }
+};
+
+const deleteChat = async (req, res) => {
+    try {
+      const { chatId } = req.params;
+  
+      
+      const chat = await Chat.findById(chatId);
+      if (!chat) {
+        return res.status(404).send('Chat not found!');
+      }
+  
+    
+      await Chat.findByIdAndDelete(chatId);
+  
+      res.status(200).send('Chat deleted successfully.');
+    } catch (error) {
+      res.status(500).send(error.message);
+    }
+  };
+  
+
+module.exports = { addMessage ,getMessages,markMessagesAsRead,deleteChat};
+
+
