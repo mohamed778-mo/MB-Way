@@ -22,7 +22,7 @@ const add_form=async(req,res)=>{
 
         const employee = await Employee.findById(employee_id)
         if(!employee){
-            return res.status(404).send("doctor not found")
+            return res.status(404).json("doctor not found")
         }
         const overlappingAppointment = await Appointments.findOne({
             employee_id: employee_id,
@@ -35,7 +35,7 @@ const add_form=async(req,res)=>{
         });
 
         if (overlappingAppointment) {
-            return res.status(400).send("There is already an appointment during this time.");
+            return res.status(400).json("There is already an appointment during this time.");
         }
         const new_form = new Appointments({
             client_name,
@@ -49,18 +49,18 @@ const add_form=async(req,res)=>{
             file:link,
         })
         new_form.save()
-        res.status(200).send("form is added")
+        res.status(200).json("form is added")
     }catch(e){
-        res.status(500).send(e.message)
+        res.status(500).json(e.message)
     }
 }
 
 const get_forms=async(req,res)=>{
     try{
         const forms = await Appointments.find()
-        res.status(200).send(forms)
+        res.status(200).json(forms)
     }catch(e){
-        res.status(500).send(e.message)
+        res.status(500).json(e.message)
     }    
 }
 
@@ -69,11 +69,11 @@ const get_form_by_id=async(req,res)=>{
         const form_id = req.params.form_id
         const form = await Appointments.findById(form_id)
         if(!form){
-            return res.status(404).send("form not found")
+            return res.status(404).json("form not found")
         }
-        res.status(200).send(form)
+        res.status(200).json(form)
     }catch(e){
-        res.status(500).send(e.message)
+        res.status(500).json(e.message)
     }    
 }
 
@@ -82,11 +82,11 @@ const get_my_forms_by_employee_id=async(req,res)=>{
         const employee_id = req.params.employee_id
         const forms = await Appointments.find({employee_id: employee_id})
         if(!forms){
-            return res.status(404).send("forms not found")
+            return res.status(404).json("forms not found")
         }
-        res.status(200).send(forms)
+        res.status(200).json(forms)
     }catch(e){
-        res.status(500).send(e.message)
+        res.status(500).json(e.message)
     }    
 }
 
@@ -98,19 +98,19 @@ const update_form=async(req,res)=>{
         if(data.employee_id){
             const employee = await Employee.findById(data.employee_id)
             if(!employee){
-                return res.status(404).send("doctor not found")
+                return res.status(404).json("doctor not found")
             }
             employee_name=employee.name
         }
         const form = await Appointments.findByIdAndUpdate(form_id,{...data,employee_name:employee_name,new:true})
         if(!form){
-            return res.status(404).send("form not found")
+            return res.status(404).json("form not found")
         }
         
         await form.save()
-        res.status(200).send("form is updated")
+        res.status(200).json("form is updated")
     }catch(e){
-        res.status(500).send(e.message)
+        res.status(500).json(e.message)
     }
 }
 
@@ -119,19 +119,19 @@ const delete_form=async(req,res)=>{
         const form_id = req.params.form_id
         const form = await Appointments.findByIdAndDelete(form_id)
         if(!form){
-            return res.status(404).send("form not found")
+            return res.status(404).json("form not found")
         }
-        res.status(200).send("form is deleted")
+        res.status(200).json("form is deleted")
     }catch(e){
-        res.status(500).send(e.message)
+        res.status(500).json(e.message)
     }
 }
 const delete_all_forms=async(req,res)=>{
     try{
         await Appointments.deleteMany()
-        res.status(200).send("all forms deleted")
+        res.status(200).json("all forms deleted")
     }catch(e){
-        res.status(500).send(e.message)
+        res.status(500).json(e.message)
     }
 }
 
