@@ -21,15 +21,15 @@ const Register = async (req, res) => {
     const user = req.body;
     const duplicatedEmail = await Employee.findOne({ email: user.email });
     if (duplicatedEmail) {
-      return res.status(400).send("Email already exist!!");
+      return res.status(400).json("Email already exist!!");
     }
     const newUser = new Employee({ ...user,photo:link});
   
     await newUser.save();
 
-    res.status(200).send("register is success please wait verfiy !!");
+    res.status(200).json("register is success please wait verfiy !!");
   } catch (error) {
-    res.status(500).send(error.message);
+    res.status(500).json(error.message);
   }
 };
 
@@ -40,19 +40,19 @@ const Login = async (req, res) => {
     const { email, password } = req.body;
     const user = await Employee.findOne({ email: email });
     if (!user) {
-      return res.status(404).send("EMAIL OR PASSWORD NOT CORRECT ");
+      return res.status(404).json("EMAIL OR PASSWORD NOT CORRECT ");
     }
     const check_block =user.isBlock;
     if (check_block) {
-      return res.status(404).send("you are BLOCKED !!");
+      return res.status(404).json("you are BLOCKED !!");
     }
     const verified =user.verified;
     if (!verified) {
-      return res.status(400).send("please wait verfiy !!");
+      return res.status(400).json("please wait verfiy !!");
     }
     const isPassword = await bcryptjs.compare(password, user.password);
     if (!isPassword) {
-      return res.status(404).send("EMAIL OR PASSWORD NOT CORRECT ");
+      return res.status(404).json("EMAIL OR PASSWORD NOT CORRECT ");
     }
 
 
@@ -68,9 +68,9 @@ const Login = async (req, res) => {
   
     res
       .status(200)
-      .send({ access_token: `Bearer ${token}`, success: "Login is success!" });
+      .json({ access_token: `Bearer ${token}`, success: "Login is success!" });
   } catch (error) {
-    res.status(500).send("Server Error");
+    res.status(500).json("Server Error");
   }
 };
 
@@ -79,15 +79,15 @@ const editEmployeeData = async (req, res) => {
   try {
     const id = req.user._id;
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(404).send("ID is not correct!!");
+      return res.status(404).json("ID is not correct!!");
     }
     const data=await Employee.findById(id)
     if (!data) {
-      return res.status(404).send("User not found!");
+      return res.status(404).json("User not found!");
     }
     const check_block =data.isBlock;
     if (check_block) {
-      return res.status(404).send("you are BLOCKED !!");
+      return res.status(404).json("you are BLOCKED !!");
     }
     const file = req.files?.find(f => f.fieldname === 'file');
         
@@ -98,17 +98,17 @@ const editEmployeeData = async (req, res) => {
            await Employee.findByIdAndUpdate(id,{...req.body,photo:link, new: true })
           await data.save();
 
-          return res.status(200).send("Data updated successfully!");
+          return res.status(200).json("Data updated successfully!");
 
       }
 
   
     await Employee.findByIdAndUpdate(id,{...req.body, new: true })
 
-    return res.status(200).send("Data updated successfully!");
+    return res.status(200).json("Data updated successfully!");
 
   } catch (e) {
-    res.status(500).send(e.message);
+    res.status(500).json(e.message);
   }
 };
 const manager_add_task = async (req, res) => {
@@ -117,10 +117,10 @@ const manager_add_task = async (req, res) => {
       const user_data = await Employee.findById(req.user._id);
       const check_block =user_data.isBlock;
       if (check_block) {
-         return res.status(404).send("you are BLOCKED !!");
+         return res.status(404).json("you are BLOCKED !!");
       }
       if (!user_data.isManager) {
-          return res.status(400).send('You are not a manager!');
+          return res.status(400).json('You are not a manager!');
       }
 
       const { task_heading, section, task_description, from, to, employees_id } = req.body;
@@ -142,9 +142,9 @@ const manager_add_task = async (req, res) => {
           { $push: { task_notdone: new_task._id } } 
       );
 
-      res.status(200).send('Task created and assigned successfully!');
+      res.status(200).json('Task created and assigned successfully!');
   } catch (e) {
-      res.status(500).send(e.message);
+      res.status(500).json(e.message);
   }
 };
 
@@ -155,7 +155,7 @@ const update_task = async (req, res) => {
 
     const task = await Task.findById(task_id);
     if (!task) {
-      return res.status(404).send('Task not found');
+      return res.status(404).json('Task not found');
     }
 
     
@@ -165,7 +165,7 @@ const update_task = async (req, res) => {
       if (existingEmployees.length > 0) {
         return res
           .status(400)
-          .send(`Employee(s) with ID(s) ${existingEmployees.join(', ')} are already assigned to this task.`);
+          .json(`Employee(s) with ID(s) ${existingEmployees.join(', ')} are already assigned to this task.`);
       }
 
     
@@ -201,10 +201,10 @@ const update_task = async (req, res) => {
 
     await task.save();
 
-    res.status(200).send('Task updated successfully!');
+    res.status(200).json('Task updated successfully!');
   } catch (e) {
     console.error('Error:', e.message);
-    res.status(500).send(e.message);
+    res.status(500).json(e.message);
   }
 };
 
@@ -218,11 +218,11 @@ const get_employee_tasks = async (req, res) => {
     
     const check_block =employee_data.isBlock;
     if (check_block) {
-      return res.status(404).send("you are BLOCKED !!");
+      return res.status(404).json("you are BLOCKED !!");
     }
     
     if (!employee_data) {
-      return res.status(404).send('Employee not found!');
+      return res.status(404).json('Employee not found!');
     }
 
    
@@ -230,9 +230,9 @@ const get_employee_tasks = async (req, res) => {
     const tasks_heading = employee_data.task_notdone.map(task => task.task_heading);
 
    
-    res.status(200).send({ tasks_id, tasks_heading });
+    res.status(200).json({ tasks_id, tasks_heading });
   } catch (e) {
-    res.status(500).send(e.message);
+    res.status(500).json(e.message);
   }
 };
 
@@ -244,11 +244,11 @@ const get_employee_det_task= async(req,res)=>{
  const task_data = await Task.findById(task_id).select('-employees_id')
 
  if (!task_data) {
-  return res.status(404).send('Task not found!');
+  return res.status(404).json('Task not found!');
 }
 
- res.status(200).send(task_data)
-  }catch(e){res.status(500).send(e.message)}
+ res.status(200).json(task_data)
+  }catch(e){res.status(500).json(e.message)}
 }
 
 
@@ -256,24 +256,24 @@ const attach_employee_task = async (req, res) => {
   try {
     const file = req.files?.find(f => f.fieldname === 'file');
     if (!file) {
-      return res.status(400).send('No file uploaded.');
+      return res.status(400).json('No file uploaded.');
     }
 
     const link = `http://localhost:3000/uploads/${file.filename}`;
 
     const data_employee = await Employee.findById(req.user._id);
     if (!data_employee) {
-      return res.status(404).send('Employee not found!');
+      return res.status(404).json('Employee not found!');
     }
     const check_block =data_employee.isBlock;
     if (check_block) {
-      return res.status(404).send("you are BLOCKED !!");
+      return res.status(404).json("you are BLOCKED !!");
     }
 
     const task_id = req.params.task_id;
     const task_data = await Task.findById(task_id);
     if (!task_data) {
-      return res.status(404).send('Task not found!');
+      return res.status(404).json('Task not found!');
     }
 
     const check_doneTask = await DoneTask.findOne({ task_id: task_id });
@@ -328,10 +328,10 @@ const attach_employee_task = async (req, res) => {
       console.log(`Task ${task_id} has been deleted as all employees completed it.`);
     }
 
-    res.status(200).send('Attach task is successful.');
+    res.status(200).json('Attach task is successful.');
   } catch (e) {
     console.error(e);
-    res.status(500).send(e.message);
+    res.status(500).json(e.message);
   }
 };
 
@@ -343,17 +343,17 @@ const get_all_done_tasks = async (req, res) => {
       
     const check_block =user_data.isBlock;
     if (check_block) {
-      return res.status(404).send("you are BLOCKED !!");
+      return res.status(404).json("you are BLOCKED !!");
     }
     if (!user_data.isManager) {
-      return res.status(400).send('You are not a manager!');
+      return res.status(400).json('You are not a manager!');
     }
 
    const all_tasks = await DoneTask.find()
    
-    res.status(200).send(all_tasks);
+    res.status(200).json(all_tasks);
   } catch (e) {
-    res.status(500).send(e.message);
+    res.status(500).json(e.message);
   }
 };
 
@@ -363,17 +363,17 @@ const get_det_done_task = async (req, res) => {
     const user_data = await Employee.findById(req.user._id);
     const check_block =user_data.isBlock;
     if (check_block) {
-      return res.status(404).send("you are BLOCKED !!");
+      return res.status(404).json("you are BLOCKED !!");
     }
     if (!user_data.isManager) {
-      return res.status(400).send('You are not a manager!');
+      return res.status(400).json('You are not a manager!');
     }
 
    const done_task = await DoneTask.findById(task_id)
    
-    res.status(200).send(done_task);
+    res.status(200).json(done_task);
   } catch (e) {
-    res.status(500).send(e.message);
+    res.status(500).json(e.message);
   }
 };
 
@@ -382,17 +382,17 @@ const get_all_notdone_tasks = async (req, res) => {
     const user_data = await Employee.findById(req.user._id);
     const check_block =user_data.isBlock;
     if (check_block) {
-      return res.status(404).send("you are BLOCKED !!");
+      return res.status(404).json("you are BLOCKED !!");
     }
     if (!user_data.isManager) {
-      return res.status(400).send('You are not a manager!');
+      return res.status(400).json('You are not a manager!');
     }
 
    const all_tasks = await Task.find()
    
-    res.status(200).send(all_tasks);
+    res.status(200).json(all_tasks);
   } catch (e) {
-    res.status(500).send(e.message);
+    res.status(500).json(e.message);
   }
 };
 
@@ -402,17 +402,17 @@ const get_det_notdone_task = async (req, res) => {
     const user_data = await Employee.findById(req.user._id);
     const check_block =user_data.isBlock;
     if (check_block) {
-      return res.status(404).send("you are BLOCKED !!");
+      return res.status(404).json("you are BLOCKED !!");
     }
     if (!user_data.isManager) {
-      return res.status(400).send('You are not a manager!');
+      return res.status(400).json('You are not a manager!');
     }
 
    const notdone_task = await Task.findById(task_id)
    
-    res.status(200).send(notdone_task);
+    res.status(200).json(notdone_task);
   } catch (e) {
-    res.status(500).send(e.message);
+    res.status(500).json(e.message);
   }
 };
 
@@ -422,18 +422,18 @@ const deleteTask = async (req, res) => {
     const user_data = await Employee.findById(req.user._id);
 
     if (user_data.isBlock) {
-      return res.status(403).send("You are BLOCKED!");
+      return res.status(403).json("You are BLOCKED!");
     }
 
     if (!user_data.isManager) {
-      return res.status(403).send("You are not a manager!");
+      return res.status(403).json("You are not a manager!");
     }
 
     const taskId = req.params.task_id;
 
     const task = await Task.findById(taskId);
     if (!task) {
-      return res.status(404).send("Task not found!");
+      return res.status(404).json("Task not found!");
     }
 
     await Employee.updateMany(
@@ -444,9 +444,9 @@ const deleteTask = async (req, res) => {
    
     await Task.findByIdAndDelete(taskId);
 
-    res.status(200).send("Task deleted successfully.");
+    res.status(200).json("Task deleted successfully.");
   } catch (error) {
-    res.status(500).send(error.message);
+    res.status(500).json(error.message);
   }
 };
 
@@ -458,16 +458,16 @@ const deleteDoneTask = async (req, res) => {
     const user_data = await Employee.findById(req.user._id);
     const check_block =user_data.isBlock;
     if (check_block) {
-      return res.status(404).send("you are BLOCKED !!");
+      return res.status(404).json("you are BLOCKED !!");
     }
     if (!user_data.isManager) {
-      return res.status(400).send('You are not a manager!');
+      return res.status(400).json('You are not a manager!');
     }
     const  doneTaskId  = req.params.task_id;
     
     const doneTask = await DoneTask.findById(doneTaskId);
     if (!doneTask) {
-      return res.status(404).send('DoneTask not found!');
+      return res.status(404).json('DoneTask not found!');
     }
 const employees_id = doneTask.employees_id
     await Employee.updateMany(
@@ -477,9 +477,9 @@ const employees_id = doneTask.employees_id
     
     await DoneTask.findByIdAndDelete(doneTaskId);
 
-    res.status(200).send('DoneTask deleted successfully.');
+    res.status(200).json('DoneTask deleted successfully.');
   } catch (error) {
-    res.status(500).send(error.message);
+    res.status(500).json(error.message);
   }
 };
 
@@ -488,19 +488,19 @@ const get_employees_ref_section =async(req, res) => {
     const user_data = await Employee.findById(req.user._id);
 
     if (user_data.isBlock) {
-      return res.status(403).send("You are BLOCKED!");
+      return res.status(403).json("You are BLOCKED!");
     }
 
     if (!user_data.isManager) {
-      return res.status(403).send("You are not a manager!");
+      return res.status(403).json("You are not a manager!");
     }
     const section_name = req.body.section_name;
     const sectionToLowerCase = section_name.toLowerCase();
     const employees = await Employee.find({ section: sectionToLowerCase });
 
-    res.status(200).send(employees);
+    res.status(200).json(employees);
   } catch (e) {
-    res.status(500).send(e.message);
+    res.status(500).json(e.message);
   }
 };
 
@@ -511,12 +511,12 @@ const edit_in_employee_data = async(req, res)=> {
     const user_data = await Employee.findByIdAndUpdate(employee_id ,{...req.body, new: true });
 
     if (!user_data) {
-      return res.status(404).send('Employee not found!');
+      return res.status(404).json('Employee not found!');
     }
     await user_data.save();
-    res.status(200).send(user_data);
+    res.status(200).json(user_data);
   } catch (e) {
-    res.status(500).send(e.message);
+    res.status(500).json(e.message);
   }
 };
 
