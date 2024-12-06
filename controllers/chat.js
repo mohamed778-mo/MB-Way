@@ -19,20 +19,20 @@ const addMessage = async (req, res) => {
         const message  = req.body.message
         
 
-        const senderId =req.params.senderId 
+        const jsonerId =req.params.jsonerId 
         const receiverId =req.params.receiverId 
 
-        if (!senderId || !receiverId || (!message && !file)) {
+        if (!jsonerId || !receiverId || (!message && !file)) {
             return res.status(400).json({ message: 'Content or attachment is required.' });
         }
         let actuallySend; 
         let actuallyReceived; 
 
-        let data_sender = await Admin.findById(senderId) || await Employee.findById(senderId)
+        let data_jsoner = await Admin.findById(jsonerId) || await Employee.findById(jsonerId)
         let data_received = await Employee.findById(receiverId) || await Admin.findById(receiverId)
 
     
-    actuallySend=data_sender
+    actuallySend=data_jsoner
     actuallyReceived=data_received
         
    
@@ -41,15 +41,15 @@ if (!actuallySend || !actuallyReceived) {
     return res.status(404).json({ message: 'Sender or receiver not found.' });
 }
 
-        const senderType = actuallySend.role
+        const jsonerType = actuallySend.role
         const receiverType = actuallyReceived.role
         
 
        
         const newMessage = new Chat({
-            sender: senderId,
+            jsoner: jsonerId,
             receiver: receiverId,
-            senderModel: senderType,
+            jsonerModel: jsonerType,
             receiverModel: receiverType,
             content: message,
             attachment:link,
@@ -61,7 +61,7 @@ if (!actuallySend || !actuallyReceived) {
     
     } catch (error) {
         console.error(error);
-        res.status(500).json({ message: 'Error sending message.', error });
+        res.status(500).json({ message: 'Error jsoning message.', error });
     }
 };
 
@@ -79,8 +79,8 @@ const getMessages = async (req, res) => {
        
         const messages = await Chat.find({
             $or: [
-                { sender: userIdSender, receiver: userIdReceiver },
-                { sender: userIdReceiver, receiver: userIdSender },
+                { jsoner: userIdSender, receiver: userIdReceiver },
+                { jsoner: userIdReceiver, receiver: userIdSender },
             ],
         }).sort({ timestamp: -1 }).skip((page - 1) * limit).limit(limit); 
 
@@ -93,15 +93,15 @@ const getMessages = async (req, res) => {
 
 const markMessagesAsRead = async (req, res) => {
     try {
-        const { senderId, receiverId } = req.params;
+        const { jsonerId, receiverId } = req.params;
 
-        if (!senderId || !receiverId) {
+        if (!jsonerId || !receiverId) {
             return res.status(400).json({ message: 'Both user IDs are required.' });
         }
 
         const result = await Chat.updateMany(
             {
-                sender: senderId,
+                jsoner: jsonerId,
                 receiver: receiverId,
                 isRead: false,
             },
@@ -127,15 +127,15 @@ const deleteChat = async (req, res) => {
       
       const chat = await Chat.findById(chatId);
       if (!chat) {
-        return res.status(404).send('Chat not found!');
+        return res.status(404).json('Chat not found!');
       }
   
     
       await Chat.findByIdAndDelete(chatId);
   
-      res.status(200).send('Chat deleted successfully.');
+      res.status(200).json('Chat deleted successfully.');
     } catch (error) {
-      res.status(500).send(error.message);
+      res.status(500).json(error.message);
     }
   };
   
