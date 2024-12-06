@@ -12,7 +12,7 @@ const forgetPassword = async (req, res) => {
       if (!dubUser) {
         return res
           .status(404)
-          .send(" email is not exist , please write a correct email ");
+          .json(" email is not exist , please write a correct email ");
       }
       const SEKRET = process.env.SECRET;
       console.log(SEKRET);
@@ -37,7 +37,7 @@ const forgetPassword = async (req, res) => {
       const Message = `http://localhost:3000/app/user/resetpassword/${token}`;
   
       async function main() {
-        const info = await transporter.sendMail({
+        const info = await transporter.jsonMail({
           from: process.env.USER_EMAIL,
           to: dubUser.email,
           subject: " RESET PASSWORD ",
@@ -49,9 +49,9 @@ const forgetPassword = async (req, res) => {
   
       main().catch(console.error);
   
-      res.status(200).send(" check your email to reset password !");
+      res.status(200).json(" check your email to reset password !");
     } catch (error) {
-      res.status(500).send(error.message);
+      res.status(500).json(error.message);
     }
   };
   
@@ -67,7 +67,7 @@ const forgetPassword = async (req, res) => {
       });
   
       if (!user) {
-        return res.status(400).send('Token expired or invalid. Please try again.');
+        return res.status(400).json('Token expired or invalid. Please try again.');
       }
   
      
@@ -164,7 +164,7 @@ const forgetPassword = async (req, res) => {
     } catch (e) {
      
       console.error(e);  
-      res.status(500).send('Server error.');
+      res.status(500).json('Server error.');
     }
   };
   
