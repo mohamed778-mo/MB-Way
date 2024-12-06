@@ -11,7 +11,7 @@ const admin_add_metting = async (req, res) => {
       const user_data = await Admin.findById(req.user._id);
       
       if (!user_data) {
-          return res.status(400).send('Admin not exist !!');
+          return res.status(400).json('Admin not exist !!');
       }
 
       const { 
@@ -42,9 +42,9 @@ const admin_add_metting = async (req, res) => {
           { $push: { meeting: new_meeting._id } } 
       );
 
-      res.status(200).send('MEETING created successfully!');
+      res.status(200).json('MEETING created successfully!');
   } catch (e) {
-      res.status(500).send(e.message);
+      res.status(500).json(e.message);
   }
 };
 
@@ -54,10 +54,10 @@ const manager_add_metting = async (req, res) => {
         const user_data = await Employee.findById(req.user._id);
         const check_block =user_data.isBlock;
         if (check_block) {
-           return res.status(404).send("you are BLOCKED !!");
+           return res.status(404).json("you are BLOCKED !!");
         }
         if (!user_data.isManager) {
-            return res.status(400).send('You are not a manager!');
+            return res.status(400).json('You are not a manager!');
         }
   
         const { 
@@ -88,9 +88,9 @@ const manager_add_metting = async (req, res) => {
             { $push: { meeting: new_meeting._id } } 
         );
   
-        res.status(200).send('METTING created successfully!');
+        res.status(200).json('METTING created successfully!');
     } catch (e) {
-        res.status(500).send(e.message);
+        res.status(500).json(e.message);
     }
   };
 
@@ -104,11 +104,11 @@ const manager_add_metting = async (req, res) => {
       
       const check_block =employee_data.isBlock;
       if (check_block) {
-        return res.status(404).send("you are BLOCKED !!");
+        return res.status(404).json("you are BLOCKED !!");
       }
       
       if (!employee_data) {
-        return res.status(404).send('Employee not found!');
+        return res.status(404).json('Employee not found!');
       }
   
      
@@ -116,9 +116,9 @@ const manager_add_metting = async (req, res) => {
       const meetings_heading = employee_data.meeting.map(meet => meet.meeting_heading);
   
      
-      res.status(200).send({ meetings_id, meetings_heading });
+      res.status(200).json({ meetings_id, meetings_heading });
     } catch (e) {
-      res.status(500).send(e.message);
+      res.status(500).json(e.message);
     }
   };
   
@@ -130,11 +130,11 @@ const manager_add_metting = async (req, res) => {
    const meeting_data = await Meeting.findById(meeting_id).select('-employees_id')
   
    if (!meeting_data) {
-    return res.status(404).send('meeting not found!');
+    return res.status(404).json('meeting not found!');
   }
   
-   res.status(200).send(meeting_data)
-    }catch(e){res.status(500).send(e.message)}
+   res.status(200).json(meeting_data)
+    }catch(e){res.status(500).json(e.message)}
   }
 
   const get_all_meetings = async (req, res) => {
@@ -142,9 +142,9 @@ const manager_add_metting = async (req, res) => {
      
       const  meetings_data = await  Meeting.find()
      
-      res.status(200).send(meetings_data);
+      res.status(200).json(meetings_data);
     } catch (e) {
-      res.status(500).send(e.message);
+      res.status(500).json(e.message);
     }
   };
   
@@ -156,19 +156,19 @@ const manager_add_metting = async (req, res) => {
    const meeting_data = await Meeting.findById(meeting_id)
   
    if (!meeting_data) {
-    return res.status(404).send('meeting not found!');
+    return res.status(404).json('meeting not found!');
   }
   
-   res.status(200).send(meeting_data)
-    }catch(e){res.status(500).send(e.message)}
+   res.status(200).json(meeting_data)
+    }catch(e){res.status(500).json(e.message)}
   }
 
   const delete_meeting= async(req,res)=>{
     try{
    const meeting_id = req.params.meeting_id
    await Meeting.findByIdAndDelete(meeting_id)
-   res.status(200).send('Meeting deleted successfully!')
-    }catch(e){res.status(500).send(e.message)}
+   res.status(200).json('Meeting deleted successfully!')
+    }catch(e){res.status(500).json(e.message)}
   }
   const update_meeting = async (req, res) => {
     try {
@@ -187,7 +187,7 @@ const manager_add_metting = async (req, res) => {
   
       const meeting = await Meeting.findById(meeting_id);
       if (!meeting) {
-        return res.status(404).send('Meeting not found');
+        return res.status(404).json('Meeting not found');
       }
   
       // التحقق من التكرار قبل الإضافة
@@ -199,7 +199,7 @@ const manager_add_metting = async (req, res) => {
         if (existingEmployees.length > 0) {
           return res
             .status(400)
-            .send(`Employee(s) with ID(s) ${existingEmployees.join(', ')} are already assigned to this meeting.`);
+            .json(`Employee(s) with ID(s) ${existingEmployees.join(', ')} are already assigned to this meeting.`);
         }
   
         // إضافة الموظفين الجدد
@@ -236,10 +236,10 @@ const manager_add_metting = async (req, res) => {
   
       await meeting.save();
   
-      res.status(200).send('Meeting updated successfully!');
+      res.status(200).json('Meeting updated successfully!');
     } catch (e) {
       console.error('Error:', e.message);
-      res.status(500).send(e.message);
+      res.status(500).json(e.message);
     }
   };
   
@@ -248,8 +248,8 @@ const manager_add_metting = async (req, res) => {
   const delete_all_meeting= async(req,res)=>{
     try{
    await Meeting.deleteMany()
-   res.status(200).send('All meetings deleted successfully!')
-    }catch(e){res.status(500).send(e.message)}
+   res.status(200).json('All meetings deleted successfully!')
+    }catch(e){res.status(500).json(e.message)}
   }
 
   module.exports = {
