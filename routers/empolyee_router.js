@@ -32,7 +32,7 @@ router.put('/edit_employee_data',auth,Istorage.any(),editEmployeeData)
 
 router.put('/get_employees_ref_section',auth,get_employees_ref_section)
 
-router.post('/manager_add_task',auth,manager_add_task)
+router.post('/manager_add_task',manager_add_task)
 router.get('/get_employee_tasks',auth,get_employee_tasks)
 router.get('/get_employee_det_task/:task_id',auth,get_employee_det_task)
 router.post('/attach_employee_task/:task_id',auth,Istorage.any(),attach_employee_task)
