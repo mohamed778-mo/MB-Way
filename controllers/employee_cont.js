@@ -247,83 +247,87 @@ const get_employee_det_task= async(req,res)=>{
 const attach_employee_task = async (req, res) => {
   try {
     const file = req.files?.find(f => f.fieldname === 'file');
-    if (!file) {
-      return res.status(400).json('No file uploaded.');
-    }
+    if (!file) return res.status(400).send('No file uploaded.');
 
     const link = `http://localhost:3000/uploads/${file.filename}`;
 
     const data_employee = await Employee.findById(req.user._id);
-    if (!data_employee) {
-      return res.status(404).json('Employee not found!');
-    }
-    const check_block =data_employee.isBlock;
-    if (check_block) {
-      return res.status(404).json("you are BLOCKED !!");
-    }
+    if (!data_employee) return res.status(404).send('Employee not found!');
+    if (data_employee.isBlock) return res.status(403).send('You are BLOCKED!');
 
     const task_id = req.params.task_id;
     const task_data = await Task.findById(task_id);
-    if (!task_data) {
-      return res.status(404).json('Task not found!');
+    if (!task_data) return res.status(404).send('Task not found!');
+    if (!task_data.to || !task_data.from) return res.status(400).send('Task dates are missing or invalid.');
+
+  
+    const check_doneTask = await DoneTask.findOne({ task_id });
+    if (check_doneTask) {
+      const isAlreadySubmitted = check_doneTask.attachment.some(
+          attachment => attachment.employee_id.toString() === req.user._id.toString()
+      );
+      if (isAlreadySubmitted) {
+        return res.status(400).send('You have already submitted this task.');
+      }
     }
 
-    const check_doneTask = await DoneTask.findOne({ task_id: task_id });
+    const deadline_task_date = new Date(task_data.to);
+    const task_start_date = new Date(task_data.from);
+    const attachment_date = new Date();
+
+    const taskDuration = deadline_task_date.getTime() - task_start_date.getTime();
+    const timeElapsed = attachment_date.getTime() - task_start_date.getTime();
+    const timeDifferencePercentage = (timeElapsed / taskDuration) * 100;
+
+    let rate = 1; 
+    if (timeDifferencePercentage <= 30) rate = 5;
+    else if (timeDifferencePercentage <= 50) rate = 4;
+    else if (timeDifferencePercentage <= 70) rate = 3;
+    else if (timeDifferencePercentage <= 80) rate = 2;
+
+    const attachment = {
+      attach_time: new Date(),
+      link: link,
+      employee_id: req.user._id,
+      employee_name: data_employee.name,
+      rate,
+    };
 
     if (!check_doneTask) {
-     
       const new_LinkTask = new DoneTask({
         task_heading: task_data.task_heading,
         section: task_data.section,
         from: task_data.from,
         to: task_data.to,
         task_id: task_id,
-        attachment: [
-          {
-            attach_time: new Date(),
-            link: link,
-            employee_id: req.user._id,
-            employee_name: data_employee.name,
-          },
-        ],
+        attachment: [attachment],
       });
       await new_LinkTask.save();
     } else {
-   
-      check_doneTask.attachment.push({
-        attach_time: new Date(),
-        link: link,
-        employee_id: req.user._id,
-        employee_name: data_employee.name,
-      });
+      delete attachment.rate; 
+      check_doneTask.attachment.push(attachment);
       await check_doneTask.save();
     }
 
     data_employee.task_done.push(task_id);
-
-  
-    await Employee.updateOne(
-      { _id: req.user._id },
-      { $pull: { task_notdone: task_id } }
-    );
-
+    data_employee.task_notdone = data_employee.task_notdone.filter(id => id.toString() !== task_id);
     await data_employee.save();
 
-    await Task.updateOne(
-      { _id: task_id },
-      { $pull: { employees_id: req.user._id } }
+    const updatedTask = await Task.findByIdAndUpdate(
+        task_id,
+        { $pull: { employees_id: req.user._id } },
+        { new: true }
     );
 
-    const updatedTask = await Task.findById(task_id);
-    if (updatedTask && updatedTask.employees_id.length === 0) {
+    if (updatedTask?.employees_id.length === 0) {
       await Task.findByIdAndDelete(task_id);
       console.log(`Task ${task_id} has been deleted as all employees completed it.`);
     }
 
-    res.status(200).json('Attach task is successful.');
+    res.status(200).send('Attach task is successful.');
   } catch (e) {
     console.error(e);
-    res.status(500).json(e.message);
+    res.status(500).send(e.message);
   }
 };
 
