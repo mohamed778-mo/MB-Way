@@ -114,9 +114,7 @@ const editEmployeeData = async (req, res) => {
 const manager_add_task = async (req, res) => {
   try {
      
-      const user_data = await Employee.findById(req.user._id);
-      const check_block =user_data.isBlock;
-
+     
       const { task_heading, section, task_description, from, to, employees_id } = req.body;
 
      
