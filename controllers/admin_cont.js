@@ -7,7 +7,7 @@ const Chat = require('../models/chat');
 const bcryptjs = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const mongoose = require("mongoose");
-const nodemailer = require("nodemailer");
+require("nodemailer");
 require("dotenv").config();
 
 
@@ -158,7 +158,7 @@ const editAdminData = async (req, res) => {
   
 
         await Admin.findByIdAndUpdate(id,{...req.body,new: true })
-        await data.save();;
+        await data.save();
     res.status(200).json("Data updated successfully!");
   } catch (e) {
     res.status(500).json(e.message);
@@ -226,6 +226,7 @@ const get_tasks_nearly_not_done = async (req, res) => {
         ]
       }
     });
+if(!tasks){return res.status(200).send([])}
 
     
     res.status(200).json(tasks);
