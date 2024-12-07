@@ -116,12 +116,6 @@ const manager_add_task = async (req, res) => {
      
       const user_data = await Employee.findById(req.user._id);
       const check_block =user_data.isBlock;
-      if (check_block) {
-         return res.status(404).json("you are BLOCKED !!");
-      }
-      if (!user_data.isManager) {
-          return res.status(400).json('You are not a manager!');
-      }
 
       const { task_heading, section, task_description, from, to, employees_id } = req.body;
 
