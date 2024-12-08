@@ -24,7 +24,10 @@ const{
     verifyEmployeeEmail,
    remove_verifyEmployeeEmail,
    get_employees_ref_section,
-   edit_in_employee_data
+   edit_in_employee_data,
+     delete_nearly_Task,
+  get_det_notdone_task,
+  update_task
 
 }=require("../controllers/admin_cont")
 
@@ -67,5 +70,13 @@ router.delete('/delete_all_taskings',adminAuth,delete_all_taskings)
 router.put('/get_employees_ref_section',get_employees_ref_section)
 
 router.patch('/edit_in_employee_data/:employee_id',edit_in_employee_data)
+
+router.get('/get_det_not_done_task/:task_id',get_det_notdone_task)
+
+router.patch('/edit_not_done_task/:task_id',update_task)
+
+router.delete('/delete_not_done_task/:task_id',delete_nearly_Task)
+
+
 
 module.exports = router
