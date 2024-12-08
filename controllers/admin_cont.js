@@ -444,9 +444,9 @@ const get_det_notdone_task = async (req, res) => {
 
    const notdone_task = await Task.findById(task_id)
    
-    res.status(200).send(notdone_task);
+    res.status(200).json(notdone_task);
   } catch (e) {
-    res.status(500).send(e.message);
+    res.status(500).json(e.message);
   }
 };
 
@@ -459,7 +459,7 @@ const delete_nearly_Task = async (req, res) => {
 
     const task = await Task.findById(taskId);
     if (!task) {
-      return res.status(404).send("Task not found!");
+      return res.status(404).json("Task not found!");
     }
 
     await Employee.updateMany(
@@ -470,9 +470,9 @@ const delete_nearly_Task = async (req, res) => {
    
     await Task.findByIdAndDelete(taskId);
 
-    res.status(200).send("Task deleted successfully.");
+    res.status(200).json("Task deleted successfully.");
   } catch (error) {
-    res.status(500).send(error.message);
+    res.status(500).json(error.message);
   }
 };
 
@@ -483,7 +483,7 @@ const update_task = async (req, res) => {
 
     const task = await Task.findById(task_id);
     if (!task) {
-      return res.status(404).send('Task not found');
+      return res.status(404).json('Task not found');
     }
 
     
@@ -493,7 +493,7 @@ const update_task = async (req, res) => {
       if (existingEmployees.length > 0) {
         return res
           .status(400)
-          .send(`Employee(s) with ID(s) ${existingEmployees.join(', ')} are already assigned to this task.`);
+          .json(`Employee(s) with ID(s) ${existingEmployees.join(', ')} are already assigned to this task.`);
       }
 
     
@@ -529,10 +529,10 @@ const update_task = async (req, res) => {
 
     await task.save();
 
-    res.status(200).send('Task updated successfully!');
+    res.status(200).json('Task updated successfully!');
   } catch (e) {
     console.error('Error:', e.message);
-    res.status(500).send(e.message);
+    res.status(500).json(e.message);
   }
 };
 
