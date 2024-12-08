@@ -239,6 +239,7 @@ const get_tasks_nearly_not_done = async (req, res) => {
 };
 
 
+
 const add_access_manager=async (req, res) => {
 
   try {
@@ -437,6 +438,105 @@ const edit_in_employee_data = async(req, res)=> {
   }
 };
 
+const get_det_notdone_task = async (req, res) => {
+  try {
+    const task_id=req.params.task_id
+
+   const notdone_task = await Task.findById(task_id)
+   
+    res.status(200).send(notdone_task);
+  } catch (e) {
+    res.status(500).send(e.message);
+  }
+};
+
+const delete_nearly_Task = async (req, res) => {
+  try {
+
+  
+
+    const taskId = req.params.task_id;
+
+    const task = await Task.findById(taskId);
+    if (!task) {
+      return res.status(404).send("Task not found!");
+    }
+
+    await Employee.updateMany(
+      { _id: { $in: task.employees_id } }, 
+      { $pull: { task_notdone: taskId } }  
+    );
+
+   
+    await Task.findByIdAndDelete(taskId);
+
+    res.status(200).send("Task deleted successfully.");
+  } catch (error) {
+    res.status(500).send(error.message);
+  }
+};
+
+const update_task = async (req, res) => {
+  try {
+    const { push_employees_id, remove_employees_id, task_date, from, to, task_heading, task_description } = req.body;
+    const task_id = req.params.task_id;
+
+    const task = await Task.findById(task_id);
+    if (!task) {
+      return res.status(404).send('Task not found');
+    }
+
+    
+    if (push_employees_id) {
+      const existingEmployees = task.employees_id.filter((id) => push_employees_id.includes(id.toString()));
+
+      if (existingEmployees.length > 0) {
+        return res
+          .status(400)
+          .send(`Employee(s) with ID(s) ${existingEmployees.join(', ')} are already assigned to this task.`);
+      }
+
+    
+      await Task.findByIdAndUpdate(task_id, {
+        $addToSet: { employees_id: { $each: push_employees_id } },
+      });
+
+      
+      await Employee.updateMany(
+        { _id: { $in: push_employees_id } },
+        { $push: { task_notdone: task._id } }
+      );
+    }
+
+  
+    if (remove_employees_id) {
+      await Task.findByIdAndUpdate(task_id, {
+        $pull: { employees_id: { $in: remove_employees_id } },
+      });
+
+      await Employee.updateMany(
+        { _id: { $in: remove_employees_id } },
+        { $pull: { task_notdone: task._id } }
+      );
+    }
+
+   
+    if (task_date) task.task_date = task_date;
+    if (from) task.from = from;
+    if (to) task.to = to;
+    if (task_heading) task.task_heading = task_heading;
+    if (task_description) task.task_description = task_description;
+
+    await task.save();
+
+    res.status(200).send('Task updated successfully!');
+  } catch (e) {
+    console.error('Error:', e.message);
+    res.status(500).send(e.message);
+  }
+};
+
+
 module.exports = {
     Register,
     Login,
@@ -457,7 +557,10 @@ module.exports = {
     verifyEmployeeEmail,
    remove_verifyEmployeeEmail,
    get_employees_ref_section,
-   edit_in_employee_data
+   edit_in_employee_data,
+  delete_nearly_Task,
+  get_det_notdone_task,
+  update_task
     
    
 
