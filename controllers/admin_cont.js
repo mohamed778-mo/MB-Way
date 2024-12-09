@@ -200,31 +200,41 @@ const get_det_done_task = async (req, res) => {
 
 const get_tasks_nearly_not_done = async (req, res) => {
   try {
+    
     const tasks = await Task.find({
       $expr: {
         $gte: [
           {
             $divide: [
-              { 
-                $subtract: [ 
-                  { $dateFromString: { dateString: "$to" } }, 
-                  { $dateFromString: { dateString: "$from" } } 
-                ] 
+              {
+                $subtract: [
+                  new Date(), // الوقت الحالي
+                  { $dateFromString: { dateString: "$from" } } // بداية المهمة
+                ]
+              },
+              {
+                $subtract: [
+                  { $dateFromString: { dateString: "$to" } }, // نهاية المهمة
+                  { $dateFromString: { dateString: "$from" } } // بداية المهمة
+                ]
               }
             ]
           },
-          0.75 
+          0.75 // المهام التي تجاوزت 75%
         ]
       }
     });
 
     if (!tasks || tasks.length === 0) {
-      return res.status(200).send([]); 
+      return res.status(200).send([]); // لا توجد مهام مطابقة
     }
+console.log("Current Date:", new Date());
+console.log("Task From:", tasks.from);
+console.log("Task To:", tasks.to);
 
-    res.status(200).json(tasks);
+    res.status(200).json(tasks); // عرض المهام
   } catch (e) {
-    res.status(500).json({ error: e.message }); 
+    res.status(500).json({ error: e.message }); // معالجة الأخطاء
   }
 };
 
