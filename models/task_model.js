@@ -21,7 +21,7 @@ var taskSchema = new mongoose.Schema({
         type:mongoose.Schema.Types.ObjectId,
         ref:'Empolyee'
        },
-        employee_name:{
+        name:{
             type:String
         },
         role:{
