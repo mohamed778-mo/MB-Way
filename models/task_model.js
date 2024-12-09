@@ -16,9 +16,20 @@ var taskSchema = new mongoose.Schema({
     to:{
         type:String
     },
-    employees_id:[{
+    employees:[{
+       employee_id:{
         type:mongoose.Schema.Types.ObjectId,
         ref:'Empolyee'
+       },
+        employee_name:{
+            type:String
+        },
+        role:{
+            type:String
+        },
+        photo:{
+            type:String
+        }
     }]
 });
 
