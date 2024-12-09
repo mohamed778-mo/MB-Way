@@ -198,7 +198,7 @@ const get_det_done_task = async (req, res) => {
   }
 };
 
-cconst get_tasks_nearly_not_done = async (req, res) => {
+const get_tasks_nearly_not_done = async (req, res) => {
   try {
     const currentDate = new Date();
 
