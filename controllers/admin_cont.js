@@ -207,12 +207,6 @@ const get_tasks_nearly_not_done = async (req, res) => {
             $divide: [
               { 
                 $subtract: [ 
-                  new Date(),
-                  { $dateFromString: { dateString: "$from" } } 
-                ] 
-              },
-              { 
-                $subtract: [ 
                   { $dateFromString: { dateString: "$to" } }, 
                   { $dateFromString: { dateString: "$from" } } 
                 ] 
