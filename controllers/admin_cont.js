@@ -198,7 +198,7 @@ const get_det_done_task = async (req, res) => {
   }
 };
 
-const get_tasks_nearly_not_done = async (req, res) => {
+cconst get_tasks_nearly_not_done = async (req, res) => {
   try {
     const currentDate = new Date();
 
@@ -207,28 +207,26 @@ const get_tasks_nearly_not_done = async (req, res) => {
         $gte: [
           {
             $divide: [
-              {
-                $subtract: [currentDate, "$from"]
-              },
-              {
-                $subtract: ["$to", "$from"]
-              }
+              { $subtract: [currentDate, "$from"] }, // الوقت المنقضي
+              { $subtract: ["$to", "$from"] } // المدة الإجمالية
             ]
           },
-          0.7 
+          0.7 // النسبة المطلوبة: 70% أو أكثر
         ]
       }
     });
 
     if (!tasks || tasks.length === 0) {
-      return res.status(200).send([]); 
+      return res.status(200).json([]); // لا توجد مهام مطابقة
     }
 
-    res.status(200).json(tasks);
+    res.status(200).json(tasks); // عرض المهام المطابقة
   } catch (e) {
-    res.status(500).json({ error: e.message }); 
+    console.error("Error:", e.message);
+    res.status(500).json({ error: e.message }); // معالجة الأخطاء
   }
 };
+
 
 
 
