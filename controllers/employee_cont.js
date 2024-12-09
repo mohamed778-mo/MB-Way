@@ -130,8 +130,8 @@ const manager_add_task = async (req, res) => {
             task_heading,
             section,
             task_description,
-            from,
-            to,
+            from: new Date(req.body.from),
+            to: new Date(req.body.to),
             employees: formattedEmployees,
         });
         await new_task.save();
@@ -191,9 +191,9 @@ const update_task = async (req, res) => {
         }
 
       
-        if (task_date) task.task_date = task_date;
-        if (from) task.from = from;
-        if (to) task.to = to;
+        if (task_date) task.task_date = new Date(task_date) ;
+        if (from) task.from = new Date(from) ;
+        if (to) task.to = new Date(to) ;
         if (task_heading) task.task_heading = task_heading;
         if (task_description) task.task_description = task_description;
 
