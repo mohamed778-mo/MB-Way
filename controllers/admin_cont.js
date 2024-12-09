@@ -491,7 +491,7 @@ const update_task = async (req, res) => {
             const newEmployees = await Employee.find({ _id: { $in: push_employees_id } }).select('name role photo');
             const formattedEmployees = newEmployees.map((employee) => ({
                 employee_id: employee._id,
-                employee_name: employee.name,
+                name: employee.name,
                 role: employee.role,
                 photo: employee.photo,
             }));
