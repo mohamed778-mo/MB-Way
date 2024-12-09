@@ -11,10 +11,10 @@ var taskSchema = new mongoose.Schema({
         type:String,
     },
     from:{
-        type:String,
+        type:Date,
     },
     to:{
-        type:String
+        type:Date
     },
     employees:[{
        employee_id:{
