@@ -111,93 +111,99 @@ const editEmployeeData = async (req, res) => {
     res.status(500).json(e.message);
   }
 };
-const manager_add_task = async (req, res) => {
-  try {
-     
-     
-      const { task_heading, section, task_description, from, to, employees_id } = req.body;
 
-     
-      const new_task = new Task({
-          task_heading,
-          section,
-          task_description,
-          from,
-          to,
-          employees_id,
-      });
-      await new_task.save();
+const manager_add_task = async (req, res) => {
+    try {
+        const { task_heading, section, task_description, from, to, employees_id } = req.body;
 
       
-      await Employee.updateMany(
-          { _id: { $in: employees_id } }, 
-          { $push: { task_notdone: new_task._id } } 
-      );
+        const employees = await Employee.find({ _id: { $in: employees_id } }).select('name role photo');
 
-      res.status(200).json('Task created and assigned successfully!');
-  } catch (e) {
-      res.status(500).json(e.message);
-  }
+        const formattedEmployees = employees.map((employee) => ({
+            employee_id: employee._id,
+            employee_name: employee.name,
+            role: employee.role,
+            photo: employee.photo,
+        }));
+
+        const new_task = new Task({
+            task_heading,
+            section,
+            task_description,
+            from,
+            to,
+            employees: formattedEmployees,
+        });
+        await new_task.save();
+
+       
+        await Employee.updateMany(
+            { _id: { $in: employees_id } },
+            { $push: { task_notdone: new_task._id } }
+        );
+
+        res.status(200).json('Task created and assigned successfully!');
+    } catch (e) {
+        res.status(500).json(e.message);
+    }
 };
 
 const update_task = async (req, res) => {
-  try {
-    const { push_employees_id, remove_employees_id, task_date, from, to, task_heading, task_description } = req.body;
-    const task_id = req.params.task_id;
+    try {
+        const { push_employees_id, remove_employees_id, task_date, from, to, task_heading, task_description } = req.body;
+        const task_id = req.params.task_id;
 
-    const task = await Task.findById(task_id);
-    if (!task) {
-      return res.status(404).json('Task not found');
-    }
+        const task = await Task.findById(task_id);
+        if (!task) {
+            return res.status(404).json('Task not found');
+        }
+
+     
+        if (push_employees_id) {
+            const newEmployees = await Employee.find({ _id: { $in: push_employees_id } }).select('name role photo');
+            const formattedEmployees = newEmployees.map((employee) => ({
+                employee_id: employee._id,
+                employee_name: employee.name,
+                role: employee.role,
+                photo: employee.photo,
+            }));
+
+            await Task.findByIdAndUpdate(task_id, {
+                $addToSet: { employees: { $each: formattedEmployees } },
+            });
+
+            await Employee.updateMany(
+                { _id: { $in: push_employees_id } },
+                { $push: { task_notdone: task._id } }
+            );
+        }
 
     
-    if (push_employees_id) {
-      const existingEmployees = task.employees_id.filter((id) => push_employees_id.includes(id.toString()));
+        if (remove_employees_id) {
+            await Task.findByIdAndUpdate(task_id, {
+                $pull: { employees: { employee_id: { $in: remove_employees_id } } },
+            });
 
-      if (existingEmployees.length > 0) {
-        return res
-          .status(400)
-          .json(`Employee(s) with ID(s) ${existingEmployees.join(', ')} are already assigned to this task.`);
-      }
-
-    
-      await Task.findByIdAndUpdate(task_id, {
-        $addToSet: { employees_id: { $each: push_employees_id } },
-      });
+            await Employee.updateMany(
+                { _id: { $in: remove_employees_id } },
+                { $pull: { task_notdone: task._id } }
+            );
+        }
 
       
-      await Employee.updateMany(
-        { _id: { $in: push_employees_id } },
-        { $push: { task_notdone: task._id } }
-      );
+        if (task_date) task.task_date = task_date;
+        if (from) task.from = from;
+        if (to) task.to = to;
+        if (task_heading) task.task_heading = task_heading;
+        if (task_description) task.task_description = task_description;
+
+        await task.save();
+
+        res.status(200).json('Task updated successfully!');
+    } catch (e) {
+        console.error('Error:', e.message);
+        res.status(500).json(e.message);
     }
-
-  
-    if (remove_employees_id) {
-      await Task.findByIdAndUpdate(task_id, {
-        $pull: { employees_id: { $in: remove_employees_id } },
-      });
-
-      await Employee.updateMany(
-        { _id: { $in: remove_employees_id } },
-        { $pull: { task_notdone: task._id } }
-      );
-    }
-
-   
-    if (task_date) task.task_date = task_date;
-    if (from) task.from = from;
-    if (to) task.to = to;
-    if (task_heading) task.task_heading = task_heading;
-    if (task_description) task.task_description = task_description;
-
-    await task.save();
-
-    res.status(200).json('Task updated successfully!');
-  } catch (e) {
-    console.error('Error:', e.message);
-    res.status(500).json(e.message);
-  }
 };
 
 
