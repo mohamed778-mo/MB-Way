@@ -226,17 +226,16 @@ const get_tasks_nearly_not_done = async (req, res) => {
       }
     });
 
-  
     if (!tasks || tasks.length === 0) {
-      return res.status(200).send([]);
+      return res.status(200).send([]); 
     }
 
     res.status(200).json(tasks);
   } catch (e) {
-  
     res.status(500).json({ error: e.message });
   }
 };
+
 
 
 
