@@ -512,9 +512,13 @@ const update_task = async (req, res) => {
             );
         }
 
-        if (task_date) task.task_date = task_date;
-        if (from) task.from = from;
-        if (to) task.to = to;
+        if (task_date) task.task_date = new Date(task_date);
+        if (from){
+           task.from = new Date(from)
+        } 
+        if (to) {
+          task.to = new Date(to)
+        }
         if (task_heading) task.task_heading = task_heading;
         if (task_description) task.task_description = task_description;
 
