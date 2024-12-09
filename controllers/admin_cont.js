@@ -200,8 +200,6 @@ const get_det_done_task = async (req, res) => {
 
 const get_tasks_nearly_not_done = async (req, res) => {
   try {
-    const currentDate = new Date();
-
     const tasks = await Task.find({
       $expr: {
         $gte: [
@@ -209,7 +207,7 @@ const get_tasks_nearly_not_done = async (req, res) => {
             $divide: [
               { 
                 $subtract: [ 
-                  currentDate, 
+                  new Date(),
                   { $dateFromString: { dateString: "$from" } } 
                 ] 
               },
@@ -232,9 +230,10 @@ const get_tasks_nearly_not_done = async (req, res) => {
 
     res.status(200).json(tasks);
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    res.status(500).json({ error: e.message }); 
   }
 };
+
 
 
 
