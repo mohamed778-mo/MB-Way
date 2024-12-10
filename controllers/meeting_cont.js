@@ -5,7 +5,7 @@ const Meeting = require("../models/mettings_model");
 require("dotenv").config();
 
 
-const admin_add_meeting = async (req, res) => {
+const admin_add_metting = async (req, res) => {
   try {
     const user_data = await Admin.findById(req.user._id);
     if (!user_data) {
@@ -61,7 +61,7 @@ const admin_add_meeting = async (req, res) => {
   }
 };
 
-const manager_add_meeting = async (req, res) => {
+const manager_add_metting = async (req, res) => {
   try {
     const user_data = await Employee.findById(req.user._id);
     if (!user_data || user_data.isBlock) {
@@ -223,7 +223,7 @@ const update_meeting = async (req, res) => {
 
 
     if (push_employees && push_employees.length > 0) {
-      // جلب معرفات الموظفين الحاليين في الاجتماع
+     
       const existingEmployeeIds = meeting.employees.map((emp) =>
         emp.employee_id.toString()
       );
@@ -257,7 +257,7 @@ const update_meeting = async (req, res) => {
 
  
     if (remove_employees && remove_employees.length > 0) {
-      // تصفية الموظفين من الاجتماع
+     
       meeting.employees = meeting.employees.filter(
         (emp) => !remove_employees.includes(emp.employee_id.toString())
       );
