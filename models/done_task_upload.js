@@ -32,6 +32,9 @@ var DoneTaskSchema = new mongoose.Schema({
             name: {
                 type: String,
             },
+            rate:{
+                type:Number,
+            }
         },
     ],
 });
