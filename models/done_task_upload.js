@@ -12,10 +12,10 @@ var DoneTaskSchema = new mongoose.Schema({
         type: String,
     },
     from: {
-        type: String,
+        type: Date,
     },
     to: {
-        type: String,
+        type: Date,
     },
     attachment: [
         {
@@ -29,7 +29,7 @@ var DoneTaskSchema = new mongoose.Schema({
                 type: mongoose.Schema.Types.ObjectId,
                 ref: 'Employee',
             },
-            employee_name: {
+            name: {
                 type: String,
             },
         },
