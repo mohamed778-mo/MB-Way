@@ -63,7 +63,7 @@ const Login = async (req, res) => {
   
     res
       .status(200)
-      .json({ access_token: `Bearer ${token}`, success: "Login is success!" });
+      .json({ access_token: `Bearer ${token}`, success: "Login is success!" ,user:user});
   } catch (error) {
     res.status(500).json(error.message);
   }
