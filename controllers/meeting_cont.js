@@ -19,8 +19,19 @@ const admin_add_meeting = async (req, res) => {
       from,
       to,
       link,
-      employees,
+      employees_id, 
     } = req.body;
+
+
+    const employees = await Employee.find({ _id: { $in: employees_id } }).select(
+      'name role photo'
+    );
+
+
+    if (employees.length !== employees_id.length) {
+      return res.status(400).json('Some employees do not exist!');
+    }
+
 
     const new_meeting = new Meeting({
       meeting_heading,
@@ -29,14 +40,18 @@ const admin_add_meeting = async (req, res) => {
       from,
       to,
       link,
-      employees,
+      employees: employees.map((emp) => ({
+        employee_id: emp._id,
+        name: emp.name,
+        role: emp.role,
+        photo: emp.photo,
+      })),
     });
 
     await new_meeting.save();
 
-    const employeeIds = employees.map((emp) => emp.employee_id);
     await Employee.updateMany(
-      { _id: { $in: employeeIds } },
+      { _id: { $in: employees_id } },
       { $push: { meetings: new_meeting._id } }
     );
 
@@ -63,8 +78,18 @@ const manager_add_meeting = async (req, res) => {
       from,
       to,
       link,
-      employees,
+      employees_id, 
     } = req.body;
+
+ 
+    const employees = await Employee.find({ _id: { $in: employees_id } }).select(
+      'name role photo'
+    );
+
+  
+    if (employees.length !== employees_id.length) {
+      return res.status(400).json('Some employees do not exist!');
+    }
 
     const new_meeting = new Meeting({
       meeting_heading,
@@ -73,14 +98,19 @@ const manager_add_meeting = async (req, res) => {
       from,
       to,
       link,
-      employees,
+      employees: employees.map((emp) => ({
+        employee_id: emp._id,
+        name: emp.name,
+        role: emp.role,
+        photo: emp.photo,
+      })),
     });
 
     await new_meeting.save();
 
-    const employeeIds = employees.map((emp) => emp.employee_id);
+ 
     await Employee.updateMany(
-      { _id: { $in: employeeIds } },
+      { _id: { $in: employees_id } },
       { $push: { meetings: new_meeting._id } }
     );
 
@@ -89,6 +119,7 @@ const manager_add_meeting = async (req, res) => {
     res.status(500).json(e.message);
   }
 };
+
 
 
 
@@ -167,11 +198,13 @@ const manager_add_meeting = async (req, res) => {
    res.status(200).json('Meeting deleted successfully!')
     }catch(e){res.status(500).json(e.message)}
   }
- const update_meeting = async (req, res) => {
+
+
+const update_meeting = async (req, res) => {
   try {
     const {
-      push_employees,
-      remove_employees,
+      push_employees, 
+      remove_employees, 
       meeting_date,
       from,
       to,
@@ -182,43 +215,61 @@ const manager_add_meeting = async (req, res) => {
 
     const meeting_id = req.params.meeting_id;
 
+
     const meeting = await Meeting.findById(meeting_id);
     if (!meeting) {
       return res.status(404).json('Meeting not found');
     }
 
-    // Add new employees
+
     if (push_employees && push_employees.length > 0) {
+      // جلب معرفات الموظفين الحاليين في الاجتماع
       const existingEmployeeIds = meeting.employees.map((emp) =>
         emp.employee_id.toString()
       );
 
-      const newEmployees = push_employees.filter(
-        (emp) => !existingEmployeeIds.includes(emp.employee_id)
+ 
+      const newEmployeeIds = push_employees.filter(
+        (empId) => !existingEmployeeIds.includes(empId)
       );
 
-      meeting.employees.push(...newEmployees);
+     
+      const newEmployees = await Employee.find({ _id: { $in: newEmployeeIds } }).select(
+        'name role photo'
+      );
 
-      const newEmployeeIds = newEmployees.map((emp) => emp.employee_id);
+     
+      meeting.employees.push(
+        ...newEmployees.map((emp) => ({
+          employee_id: emp._id,
+          name: emp.name,
+          role: emp.role,
+          photo: emp.photo,
+        }))
+      );
+
+   
       await Employee.updateMany(
         { _id: { $in: newEmployeeIds } },
         { $push: { meetings: meeting._id } }
       );
     }
 
-    // Remove employees
+ 
     if (remove_employees && remove_employees.length > 0) {
+      // تصفية الموظفين من الاجتماع
       meeting.employees = meeting.employees.filter(
         (emp) => !remove_employees.includes(emp.employee_id.toString())
       );
 
+      
       await Employee.updateMany(
         { _id: { $in: remove_employees } },
         { $pull: { meetings: meeting._id } }
       );
     }
 
-    // Update other fields
+ 
     if (meeting_date) meeting.meeting_date = meeting_date;
     if (from) meeting.from = from;
     if (to) meeting.to = to;
@@ -226,6 +277,7 @@ const manager_add_meeting = async (req, res) => {
     if (meeting_heading) meeting.meeting_heading = meeting_heading;
     if (meeting_description) meeting.meeting_description = meeting_description;
 
+    
     await meeting.save();
 
     res.status(200).json('Meeting updated successfully!');
