@@ -252,11 +252,11 @@ const get_employee_det_task= async(req,res)=>{
 
 const attach_employee_task = async (req, res) => {
   try {
-    const file = req.files?.find(f => f.fieldname === 'file');
-    if (!file) return res.status(400).json('No file uploaded.');
+    // const file = req.files?.find(f => f.fieldname === 'file');
+    // if (!file) return res.status(400).json('No file uploaded.');
 
-    const link = `http://localhost:3000/uploads/${file.filename}`;
-
+    const link = `http://localhost:3000/uploads/TEST`;
+// ${file.filename}
     const data_employee = await Employee.findById(req.user._id);
     if (!data_employee) return res.status(404).json('Employee not found!');
     if (data_employee.isBlock) return res.status(403).json('You are BLOCKED!');
