@@ -187,7 +187,7 @@ const manager_add_meeting = async (req, res) => {
       return res.status(404).json('Meeting not found');
     }
 
-
+    // Add new employees
     if (push_employees && push_employees.length > 0) {
       const existingEmployeeIds = meeting.employees.map((emp) =>
         emp.employee_id.toString()
@@ -199,9 +199,41 @@ const manager_add_meeting = async (req, res) => {
 
       meeting.employees.push(...newEmployees);
 
-      const newEmployeeIds = newEmployees.map((emp) => emp.employee
+      const newEmployeeIds = newEmployees.map((emp) => emp.employee_id);
+      await Employee.updateMany(
+        { _id: { $in: newEmployeeIds } },
+        { $push: { meetings: meeting._id } }
+      );
+    }
 
-  
+    // Remove employees
+    if (remove_employees && remove_employees.length > 0) {
+      meeting.employees = meeting.employees.filter(
+        (emp) => !remove_employees.includes(emp.employee_id.toString())
+      );
+
+      await Employee.updateMany(
+        { _id: { $in: remove_employees } },
+        { $pull: { meetings: meeting._id } }
+      );
+    }
+
+    // Update other fields
+    if (meeting_date) meeting.meeting_date = meeting_date;
+    if (from) meeting.from = from;
+    if (to) meeting.to = to;
+    if (link) meeting.link = link;
+    if (meeting_heading) meeting.meeting_heading = meeting_heading;
+    if (meeting_description) meeting.meeting_description = meeting_description;
+
+    await meeting.save();
+
+    res.status(200).json('Meeting updated successfully!');
+  } catch (e) {
+    res.status(500).json(e.message);
+  }
+};
+
   
   const delete_all_meeting= async(req,res)=>{
     try{
