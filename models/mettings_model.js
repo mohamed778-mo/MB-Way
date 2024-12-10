@@ -19,9 +19,20 @@ var meetingSchema = new mongoose.Schema({
     link:{
         type:String,
     },
-    employees_id:[{
+   employees:[{
+       employee_id:{
         type:mongoose.Schema.Types.ObjectId,
         ref:'Empolyee'
+       },
+        name:{
+            type:String
+        },
+        role:{
+            type:String
+        },
+        photo:{
+            type:String
+        }
     }]
 });
 
