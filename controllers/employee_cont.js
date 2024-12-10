@@ -303,8 +303,8 @@ const attach_employee_task = async (req, res) => {
       const new_LinkTask = new DoneTask({
         task_heading: task_data.task_heading,
         section: task_data.section,
-        from: task_data.from,
-        to: task_data.to,
+        from: new Date(task_data.from),
+        to: new Date(task_data.to),
         task_id: task_id,
         attachment: [attachment],
       });
