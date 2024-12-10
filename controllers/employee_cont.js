@@ -257,6 +257,7 @@ const attach_employee_task = async (req, res) => {
 
     const link = `http://localhost:3000/uploads/TEST`;
 // ${file.filename}
+    
     const data_employee = await Employee.findById(req.user._id);
     if (!data_employee) return res.status(404).json('Employee not found!');
     if (data_employee.isBlock) return res.status(403).json('You are BLOCKED!');
@@ -277,8 +278,8 @@ const attach_employee_task = async (req, res) => {
       }
     }
 
-    const deadline_task_date = new Date(task_data.to);
-    const task_start_date = new Date(task_data.from);
+    const deadline_task_date = task_data.to;
+    const task_start_date = task_data.from;
     const attachment_date = new Date();
 
     const taskDuration = deadline_task_date.getTime() - task_start_date.getTime();
@@ -296,15 +297,15 @@ const attach_employee_task = async (req, res) => {
       link: link,
       employee_id: req.user._id,
       name: data_employee.name,
-      rate,
+      rate:rate,
     };
 
     if (!check_doneTask) {
       const new_LinkTask = new DoneTask({
         task_heading: task_data.task_heading,
         section: task_data.section,
-        from: new Date(task_data.from),
-        to: new Date(task_data.to),
+        from: task_data.from,
+        to: task_data.to,
         task_id: task_id,
         attachment: [attachment],
       });
