@@ -295,7 +295,7 @@ const attach_employee_task = async (req, res) => {
       attach_time: new Date(),
       link: link,
       employee_id: req.user._id,
-      employee_name: data_employee.name,
+      name: data_employee.name,
       rate,
     };
 
@@ -325,10 +325,6 @@ const attach_employee_task = async (req, res) => {
         { new: true }
     );
 
-    if (updatedTask?.employees_id.length === 0) {
-      await Task.findByIdAndDelete(task_id);
-      console.log(`Task ${task_id} has been deleted as all employees completed it.`);
-    }
 
     res.status(200).json('Attach task is successful.');
   } catch (e) {
