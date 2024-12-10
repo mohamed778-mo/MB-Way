@@ -253,18 +253,18 @@ const get_employee_det_task= async(req,res)=>{
 const attach_employee_task = async (req, res) => {
   try {
     const file = req.files?.find(f => f.fieldname === 'file');
-    if (!file) return res.status(400).send('No file uploaded.');
+    if (!file) return res.status(400).json('No file uploaded.');
 
     const link = `http://localhost:3000/uploads/${file.filename}`;
 
     const data_employee = await Employee.findById(req.user._id);
-    if (!data_employee) return res.status(404).send('Employee not found!');
-    if (data_employee.isBlock) return res.status(403).send('You are BLOCKED!');
+    if (!data_employee) return res.status(404).json('Employee not found!');
+    if (data_employee.isBlock) return res.status(403).json('You are BLOCKED!');
 
     const task_id = req.params.task_id;
     const task_data = await Task.findById(task_id);
-    if (!task_data) return res.status(404).send('Task not found!');
-    if (!task_data.to || !task_data.from) return res.status(400).send('Task dates are missing or invalid.');
+    if (!task_data) return res.status(404).json('Task not found!');
+    if (!task_data.to || !task_data.from) return res.status(400).json('Task dates are missing or invalid.');
 
   
     const check_doneTask = await DoneTask.findOne({ task_id });
@@ -273,7 +273,7 @@ const attach_employee_task = async (req, res) => {
           attachment => attachment.employee_id.toString() === req.user._id.toString()
       );
       if (isAlreadySubmitted) {
-        return res.status(400).send('You have already submitted this task.');
+        return res.status(400).json('You have already submitted this task.');
       }
     }
 
@@ -330,10 +330,10 @@ const attach_employee_task = async (req, res) => {
       console.log(`Task ${task_id} has been deleted as all employees completed it.`);
     }
 
-    res.status(200).send('Attach task is successful.');
+    res.status(200).json('Attach task is successful.');
   } catch (e) {
-    console.error(e);
-    res.status(500).send(e.message);
+  
+    res.status(500).json(e.message);
   }
 };
 
