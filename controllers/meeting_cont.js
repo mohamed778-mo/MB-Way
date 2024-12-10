@@ -5,94 +5,91 @@ const Meeting = require("../models/mettings_model");
 require("dotenv").config();
 
 
-const admin_add_metting = async (req, res) => {
+const admin_add_meeting = async (req, res) => {
   try {
-     
-      const user_data = await Admin.findById(req.user._id);
-      
-      if (!user_data) {
-          return res.status(400).json('Admin not exist !!');
-      }
+    const user_data = await Admin.findById(req.user._id);
+    if (!user_data) {
+      return res.status(400).json('Admin does not exist!');
+    }
 
-      const { 
-          meeting_heading, 
-          meeting_description, 
-          meeting_date, 
-          from, 
-          to, 
-          link,
-          employees_id 
-      } = req.body;
+    const {
+      meeting_heading,
+      meeting_description,
+      meeting_date,
+      from,
+      to,
+      link,
+      employees,
+    } = req.body;
 
-     
-      const new_meeting = new Meeting({
-          meeting_heading,
-          meeting_description,
-          meeting_date,
-          from,
-          to,
-          link,
-          employees_id,
-      });
-      await new_meeting.save();
+    const new_meeting = new Meeting({
+      meeting_heading,
+      meeting_description,
+      meeting_date,
+      from,
+      to,
+      link,
+      employees,
+    });
 
-      
-      await Employee.updateMany(
-          { _id: { $in: employees_id } }, 
-          { $push: { meeting: new_meeting._id } } 
-      );
+    await new_meeting.save();
 
-      res.status(200).json('MEETING created successfully!');
+    const employeeIds = employees.map((emp) => emp.employee_id);
+    await Employee.updateMany(
+      { _id: { $in: employeeIds } },
+      { $push: { meetings: new_meeting._id } }
+    );
+
+    res.status(200).json('Meeting created successfully!');
   } catch (e) {
-      res.status(500).json(e.message);
+    res.status(500).json(e.message);
   }
 };
 
-const manager_add_metting = async (req, res) => {
-    try {
-       
-        const user_data = await Employee.findById(req.user._id);
-        const check_block =user_data.isBlock;
-        if (check_block) {
-           return res.status(404).json("you are BLOCKED !!");
-        }
-        if (!user_data.isManager) {
-            return res.status(400).json('You are not a manager!');
-        }
-  
-        const { 
-            meeting_heading, 
-            meeting_description, 
-            meeting_date, 
-            from, 
-            to, 
-            link,
-            employees_id 
-        } = req.body;
-  
-       
-        const new_meeting = new Meeting({
-            meeting_heading,
-            meeting_description,
-            meeting_date,
-            from,
-            to,
-            link,
-            employees_id,
-        });
-        await new_meeting.save();
-  
-        
-        await Employee.updateMany(
-            { _id: { $in: employees_id } }, 
-            { $push: { meeting: new_meeting._id } } 
-        );
-  
-        res.status(200).json('METTING created successfully!');
-    } catch (e) {
-        res.status(500).json(e.message);
+const manager_add_meeting = async (req, res) => {
+  try {
+    const user_data = await Employee.findById(req.user._id);
+    if (!user_data || user_data.isBlock) {
+      return res.status(404).json('You are blocked!');
     }
-  };
+    if (!user_data.isManager) {
+      return res.status(400).json('You are not authorized as a manager!');
+    }
+
+    const {
+      meeting_heading,
+      meeting_description,
+      meeting_date,
+      from,
+      to,
+      link,
+      employees,
+    } = req.body;
+
+    const new_meeting = new Meeting({
+      meeting_heading,
+      meeting_description,
+      meeting_date,
+      from,
+      to,
+      link,
+      employees,
+    });
+
+    await new_meeting.save();
+
+    const employeeIds = employees.map((emp) => emp.employee_id);
+    await Employee.updateMany(
+      { _id: { $in: employeeIds } },
+      { $push: { meetings: new_meeting._id } }
+    );
+
+    res.status(200).json('Meeting created successfully!');
+  } catch (e) {
+    res.status(500).json(e.message);
+  }
+};
+
 
 
   const get_employee_meetings = async (req, res) => {
@@ -170,79 +167,40 @@ const manager_add_metting = async (req, res) => {
    res.status(200).json('Meeting deleted successfully!')
     }catch(e){res.status(500).json(e.message)}
   }
-  const update_meeting = async (req, res) => {
-    try {
-      const { 
-        push_employees_id, 
-        remove_employees_id, 
-        meeting_date, 
-        from, 
-        to, 
-        link, 
-        meeting_heading, 
-        meeting_description 
-      } = req.body;
-  
-      const meeting_id = req.params.meeting_id;
-  
-      const meeting = await Meeting.findById(meeting_id);
-      if (!meeting) {
-        return res.status(404).json('Meeting not found');
-      }
-  
-      // التحقق من التكرار قبل الإضافة
-      if (push_employees_id) {
-        const existingEmployees = meeting.employees_id.filter((id) => 
-          push_employees_id.includes(id.toString())
-        );
-  
-        if (existingEmployees.length > 0) {
-          return res
-            .status(400)
-            .json(`Employee(s) with ID(s) ${existingEmployees.join(', ')} are already assigned to this meeting.`);
-        }
-  
-        // إضافة الموظفين الجدد
-        await Meeting.findByIdAndUpdate(meeting_id, {
-          $addToSet: { employees_id: { $each: push_employees_id } },
-        });
-  
-        // تحديث بيانات الموظفين
-        await Employee.updateMany(
-          { _id: { $in: push_employees_id } },
-          { $push: { meeting: meeting._id } }
-        );
-      }
-  
-      // إزالة الموظفين
-      if (remove_employees_id) {
-        await Meeting.findByIdAndUpdate(meeting_id, {
-          $pull: { employees_id: { $in: remove_employees_id } },
-        });
-  
-        await Employee.updateMany(
-          { _id: { $in: remove_employees_id } },
-          { $pull: { meeting: meeting._id } }
-        );
-      }
-  
-      // تحديث باقي الحقول
-      if (meeting_date) meeting.meeting_date = meeting_date;
-      if (from) meeting.from = from;
-      if (to) meeting.to = to;
-      if (link) meeting.link = link;
-      if (meeting_heading) meeting.meeting_heading = meeting_heading;
-      if (meeting_description) meeting.meeting_description = meeting_description;
-  
-      await meeting.save();
-  
-      res.status(200).json('Meeting updated successfully!');
-    } catch (e) {
-      console.error('Error:', e.message);
-      res.status(500).json(e.message);
+ const update_meeting = async (req, res) => {
+  try {
+    const {
+      push_employees,
+      remove_employees,
+      meeting_date,
+      from,
+      to,
+      link,
+      meeting_heading,
+      meeting_description,
+    } = req.body;
+
+    const meeting_id = req.params.meeting_id;
+
+    const meeting = await Meeting.findById(meeting_id);
+    if (!meeting) {
+      return res.status(404).json('Meeting not found');
     }
-  };
-  
+
+
+    if (push_employees && push_employees.length > 0) {
+      const existingEmployeeIds = meeting.employees.map((emp) =>
+        emp.employee_id.toString()
+      );
+
+      const newEmployees = push_employees.filter(
+        (emp) => !existingEmployeeIds.includes(emp.employee_id)
+      );
+
+      meeting.employees.push(...newEmployees);
+
+      const newEmployeeIds = newEmployees.map((emp) => emp.employee
+
   
   
   const delete_all_meeting= async(req,res)=>{
