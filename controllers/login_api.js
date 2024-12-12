@@ -68,6 +68,7 @@ const Login = async (req, res) => {
       access_token: `Bearer ${token}`,
       success: "Login successful",
       user:user,
+      role:role
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
