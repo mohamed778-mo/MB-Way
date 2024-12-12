@@ -34,46 +34,6 @@ const Register = async (req, res) => {
 };
 
 
-const Login = async (req, res) => {
-  try {
-    
-    const { email, password } = req.body;
-    const user = await Employee.findOne({ email: email });
-    if (!user) {
-      return res.status(404).json("EMAIL OR PASSWORD NOT CORRECT ");
-    }
-    const check_block =user.isBlock;
-    if (check_block) {
-      return res.status(404).json("you are BLOCKED !!");
-    }
-    const verified =user.verified;
-    if (!verified) {
-      return res.status(400).json("please wait verfiy !!");
-    }
-    const isPassword = await bcryptjs.compare(password, user.password);
-    if (!isPassword) {
-      return res.status(404).json("EMAIL OR PASSWORD NOT CORRECT ");
-    }
-
-
-    const SECRETKEY = process.env.SECRETKEY;
-    const token =  jwt.sign({ id: user._id }, SECRETKEY);
-    res.cookie("access_token", `Bearer ${token}`, {
-      expires: new Date(Date.now() + 60 * 60 * 24 * 1024 * 300),
-      httpOnly: true,
-    });
-
-    user.tokens.push(token);
-    user.save();
-  
-    res
-      .status(200)
-      .json({ access_token: `Bearer ${token}`, success: "Login is success!",user:user });
-  } catch (error) {
-    res.status(500).json("Server Error");
-  }
-};
-
 
 const editEmployeeData = async (req, res) => {
   try {
@@ -521,7 +481,6 @@ const edit_in_employee_data = async(req, res)=> {
 
 module.exports = {
     Register,
-    Login,
     editEmployeeData,
     //manager
     manager_add_task,
