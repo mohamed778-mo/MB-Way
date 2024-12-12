@@ -39,35 +39,6 @@ const Register = async (req, res) => {
 };
 
 
-const Login = async (req, res) => {
-  try {
-    const { email, password } = req.body;
-    const user = await Admin.findOne({ email: email });
-    if (!user) {
-      return res.status(404).json("EMAIL OR PASSWORD NOT CORRECT ");
-    }
-    const isPassword = await bcryptjs.compare(password, user.password);
-    if (!isPassword) {
-      return res.status(404).json("EMAIL OR PASSWORD NOT CORRECT ");
-    }
-
-    const SECRETKEY = process.env.SECRETKEY;
-    const token =  jwt.sign({ id: user._id }, SECRETKEY);
-    res.cookie("access_token", `Bearer ${token}`, {
-      expires: new Date(Date.now() + 60 * 60 * 24 * 1024 * 30),
-      httpOnly: true,
-    });
-
-    user.tokens.push(token);
-    user.save();
-  
-    res
-      .status(200)
-      .json({ access_token: `Bearer ${token}`, success: "Login is success!" ,user:user});
-  } catch (error) {
-    res.status(500).json(error.message);
-  }
-};
 
 const get_employee_not_verified = async(req,res) => {
   try{
@@ -536,7 +507,6 @@ const update_task = async (req, res) => {
 
 module.exports = {
     Register,
-    Login,
     getEmployee,
     getAllEmployee,
     editAdminData,
