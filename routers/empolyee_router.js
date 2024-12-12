@@ -3,7 +3,6 @@ const router = express.Router()
 
 const{
     Register,
-    Login,
     editEmployeeData,
     manager_add_task,
     
@@ -25,8 +24,6 @@ const Istorage=require("../middleware/multer")
 const {auth}=require("../middleware/auth")
 
 router.post('/register',Istorage.any(),Register)
-
-router.post('/login',Login)
 
 router.put('/edit_employee_data',auth,Istorage.any(),editEmployeeData)
 
