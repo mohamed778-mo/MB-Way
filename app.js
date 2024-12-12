@@ -41,12 +41,14 @@ const chatRouter = require('./routers/chat_router');
 const meetingRouter = require('./routers/meeting_router');
 const formRouter = require('./routers/form_router');
 const FRpasswordRouter = require('./routers/forgretpassword_router');
+const loginRouter = require('./routers/login_router');
+
 
 const dashboardRouter = require('./routers/website/dashboard_router');
 
 
 
-
+app.use('/app/choice', loginRouter);
 app.use('/app/chat', chatRouter);
 app.use('/app/admin', adminRouter);
 app.use('/app/employee', employeeRouter);
