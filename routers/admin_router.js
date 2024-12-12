@@ -6,7 +6,6 @@ const {adminAuth}=require("../middleware/auth")
 
 const{
     Register, 
-    Login,
     getEmployee,
     getAllEmployee,
     editAdminData,
@@ -32,8 +31,6 @@ const{
 }=require("../controllers/admin_cont")
 
 router.post('/register',Istorage.any(),Register)
-
-router.post('/login',Login)
 
 router.get('/get_employee_not_verified',get_employee_not_verified)
 
