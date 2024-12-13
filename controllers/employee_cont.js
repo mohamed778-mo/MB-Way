@@ -473,7 +473,7 @@ const edit_in_employee_data = async(req, res)=> {
       return res.status(404).json('Employee not found!');
     }
     await user_data.save();
-    res.status(200).json(user_data);
+    res.status(200).json('edited successfully');
   } catch (e) {
     res.status(500).json(e.message);
   }
