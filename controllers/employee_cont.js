@@ -464,20 +464,44 @@ const get_employees_ref_section =async(req, res) => {
 };
 
 
-const edit_in_employee_data = async(req, res)=> {
+const edit_in_employee_data = async (req, res) => {
   try {
-    const employee_id=req.params.employee_id;
-    const user_data = await Employee.findByIdAndUpdate(employee_id ,{...req.body, new: true });
+    const employee_id = req.params.employee_id;
+    const { shift } = req.body;
 
-    if (!user_data) {
+   
+    if (shift) {
+      const fromDate = new Date(shift.from);
+      const toDate = new Date(shift.to);
+
+    
+      if (fromDate >= toDate) {
+        return res.status(400).json('shift_to must be after shift_from.');
+      }
+
+      
+      const data = await Employee.findById(employee_id);
+      if (!data) {
+        return res.status(404).json('Employee not found!');
+      }
+
+      data.shift = shift;
+      await data.save(); 
+    }
+
+   
+    const updatedEmployee = await Employee.findByIdAndUpdate(employee_id, req.body, { new: true });
+
+    if (!updatedEmployee) {
       return res.status(404).json('Employee not found!');
     }
-    await user_data.save();
-    res.status(200).json('edited successfully');
+
+    res.status(200).json('Edited successfully');
   } catch (e) {
     res.status(500).json(e.message);
   }
 };
+
 
 module.exports = {
     Register,
