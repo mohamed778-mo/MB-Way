@@ -91,6 +91,7 @@ const manager_add_metting = async (req, res) => {
       return res.status(400).json('Some employees do not exist!');
     }
 
+    const section = user_data.section;
     const new_meeting = new Meeting({
       meeting_heading,
       meeting_description,
@@ -98,6 +99,7 @@ const manager_add_metting = async (req, res) => {
       from,
       to,
       link,
+      section:section,
       employees: employees.map((emp) => ({
         employee_id: emp._id,
         name: emp.name,
@@ -294,6 +296,19 @@ const update_meeting = async (req, res) => {
     }catch(e){res.status(500).json(e.message)}
   }
 
+  const get_metting_in_section= async(req,res) => {
+    try {
+      const manager_data=await Employee.findById(req.user._id);
+      const section = manager_data.section
+      const meetings = await Meeting.find({ section: section });
+      res.status(200).json(meetings);
+    } catch (e) {
+      res.status(500).json(e.message);
+    }
+  };
+
+
+
   module.exports = {
     //admin
     admin_add_metting,
@@ -304,6 +319,7 @@ const update_meeting = async (req, res) => {
     delete_meeting,
     update_meeting,
     delete_all_meeting,
+    get_metting_in_section,
     //employee
     get_employee_meetings,
     get_employee_det_meeting,
