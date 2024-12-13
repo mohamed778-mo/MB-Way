@@ -204,62 +204,6 @@ const get_tasks_nearly_not_done = async (req, res) => {
 
 
 
-
-
-const add_access_manager=async (req, res) => {
-
-  try {
-    const user_data = await Admin.findById(req.user._id);
-      
-    if (!user_data.isAdmin ) {
-          return res.status(400).json('You are not a Admin!');
-      }
-
-      const employee_id = req.params.employee_id
-      const employee_data = await Employee.findById(employee_id);
-      
-      if (!employee_data) {
-        return res.status(404).json('Employee not found!');
-      }
-     
-      await Employee.findByIdAndUpdate(employee_id,{isManager: true,new:true})
-
-      await employee_data.save()
-
-       res.status(200).json(`${employee_data.name} is now a manager !!`);
-
-
-    }catch (e) {
-    res.status(500).json(e.message);}
-}
-
-const remove_access_manager=async (req, res) => {
-
-  try {
-    const user_data = await Admin.findById(req.user._id);
-      
-    if (!user_data.isAdmin ) {
-          return res.status(400).json('You are not a Admin!');
-      }
-
-      const employee_id = req.params.employee_id
-      const employee_data = await Employee.findById(employee_id);
-      
-      if (!employee_data) {
-        return res.status(404).json('Employee not found!');
-      }
-     
-      await Employee.findByIdAndUpdate(employee_id,{isManager: false,new:true})
-
-      await employee_data.save()
-
-       res.status(200).json(`${employee_data.name} is now a not_manager !!`);
-
-
-    }catch (e) {
-    res.status(500).json(e.message);}
-}
-
 const deleteEmployee = async (req, res) => {
   try {
     const  employeeId  = req.params.employee_id;
@@ -318,59 +262,7 @@ const deleteDoneTask = async (req, res) => {
   }
 };
 
-const add_block=async (req, res) => {
 
-  try {
-    const user_data = await Admin.findById(req.user._id);
-      
-    if (!user_data.isAdmin ) {
-          return res.status(400).json('You are not a Admin!');
-      }
-
-      const employee_id = req.params.employee_id
-      const employee_data = await Employee.findById(employee_id);
-      
-      if (!employee_data) {
-        return res.status(404).json('Employee not found!');
-      }
-     
-      await Employee.findByIdAndUpdate(employee_id,{isBlock: true,new:true})
-
-      await employee_data.save()
-
-       res.status(200).json(`${employee_data.name} is now BLOCKED !!`);
-
-
-    }catch (e) {
-    res.status(500).json(e.message);}
-}
-
-const remove_block=async (req, res) => {
-
-  try {
-    const user_data = await Admin.findById(req.user._id);
-      
-    if (!user_data.isAdmin ) {
-          return res.status(400).json('You are not a Admin!');
-      }
-
-      const employee_id = req.params.employee_id
-      const employee_data = await Employee.findById(employee_id);
-      
-      if (!employee_data) {
-        return res.status(404).json('Employee not found!');
-      }
-     
-      await Employee.findByIdAndUpdate(employee_id,{isBlock: false,new:true})
-
-      await employee_data.save()
-
-       res.status(200).json(`${employee_data.name} is now a NOT_BLOCKED !!`);
-
-
-    }catch (e) {
-    res.status(500).json(e.message);}
-}
 const delete_all_taskings= async(req,res)=>{
   try{
  await Task.deleteMany()
@@ -389,20 +281,58 @@ const get_employees_ref_section = async (req, res) => {
   }
 };
 
-const edit_in_employee_data = async(req, res)=> {
+const edit_employee_data = async (req, res) => {
   try {
-    const employee_id=req.params.employee_id;
-    const user_data = await Employee.findByIdAndUpdate(employee_id ,{...req.body, new: true });
+    const user_data = await Admin.findById(req.user._id);
 
-    if (!user_data) {
+    if (!user_data.isManager) {
+      return res.status(400).json('You are not an Admin!');
+    }
+
+    const employee_id = req.params.employee_id;
+    const employee_data = await Employee.findById(employee_id);
+
+    if (!employee_data) {
       return res.status(404).json('Employee not found!');
     }
-    await user_data.save();
-    res.status(200).json(user_data);
+
+    const { action, updateData } = req.body; 
+
+    switch (action) {
+      case 'add_manager':
+        await Employee.findByIdAndUpdate(employee_id, { isManager: true });
+        res.status(200).json(`${employee_data.name} is now a manager!`);
+        break;
+
+      case 'remove_manager':
+        await Employee.findByIdAndUpdate(employee_id, { isManager: false });
+        res.status(200).json(`${employee_data.name} is no longer a manager!`);
+        break;
+
+      case 'block':
+        await Employee.findByIdAndUpdate(employee_id, { isBlock: true });
+        res.status(200).json(`${employee_data.name} is now BLOCKED!`);
+        break;
+
+      case 'unblock':
+        await Employee.findByIdAndUpdate(employee_id, { isBlock: false });
+        res.status(200).json(`${employee_data.name} is now UNBLOCKED!`);
+        break;
+
+      case 'edit_data':
+        await Employee.findByIdAndUpdate(employee_id, { ...updateData });
+        res.status(200).json(`${employee_data.name} data updated successfully!`);
+        break;
+
+      default:
+        res.status(400).json('Invalid action!');
+    }
+
   } catch (e) {
     res.status(500).json(e.message);
   }
 };
+
 
 const get_det_notdone_task = async (req, res) => {
   try {
@@ -513,18 +443,14 @@ module.exports = {
     get_tasks_nearly_not_done,
     get_all_done_tasks,
     get_det_done_task,
-    add_access_manager,
-    remove_access_manager,
     deleteEmployee,
     deleteDoneTask,
-    add_block,
-    remove_block,
     delete_all_taskings,
     get_employee_not_verified,
     verifyEmployeeEmail,
    remove_verifyEmployeeEmail,
    get_employees_ref_section,
-   edit_in_employee_data,
+   edit_employee_data,
   delete_nearly_Task,
   get_det_notdone_task,
   update_task
