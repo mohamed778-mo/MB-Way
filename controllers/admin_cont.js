@@ -4,8 +4,6 @@ const DoneTask =require("../models/done_task_upload")
 const Task=require("../models/task_model")
 const Chat = require('../models/chat');
 
-const bcryptjs = require("bcryptjs");
-const jwt = require("jsonwebtoken");
 const mongoose = require("mongoose");
 require("nodemailer");
 require("dotenv").config();
@@ -38,10 +36,64 @@ const Register = async (req, res) => {
   }
 };
 
+const add_task = async (req, res) => {
+  try {
+    let user_data;
+  
+  const admin=  await Admin.findById(req.user._id);
+if(!admin){
 
+  user_data = await Employee.findById(req.user._id);
+}else{
+  user_data = await Admin.findById(req.user._id);
+}
+    if (!user_data.isManager) {
+      return res.status(400).json('not Available!');
+    }
+      const { task_heading, section, task_description,employees_id } = req.body;
+
+    
+      const employees = await Employee.find({ _id: { $in: employees_id } }).select('name role photo');
+
+      const formattedEmployees = employees.map((employee) => ({
+          employee_id: employee._id,
+          name: employee.name,
+          role: employee.role,
+          photo: employee.photo,
+      }));
+
+      const new_task = new Task({
+          task_heading,
+          section,
+          task_description,
+          from: new Date(req.body.from),
+          to: new Date(req.body.to),
+          employees: formattedEmployees,
+      });
+      await new_task.save();
+
+     
+      await Employee.updateMany(
+          { _id: { $in: employees_id } },
+          { $push: { task_notdone: new_task._id } }
+      );
+
+      res.status(200).json('Task created and assigned successfully!');
+  } catch (e) {
+      res.status(500).json(e.message);
+  }
+};
 
 const get_employee_not_verified = async(req,res) => {
   try{
+   
+  
+    const user_data=  await Admin.findById(req.user._id);
+  if(!user_data.isAdmin){
+
+        return res.status(400).json('not Available!');
+  }
+
     const users = await Employee.find({ verified: false });
     if (!users) {
       return res.status(404).json("No employees found!");
@@ -78,6 +130,7 @@ const remove_verifyEmployeeEmail = async (req, res) => {
     res.status(500).json(e.message);  
   }
 };
+
 const getEmployee = async (req, res) => {
   try {
     const employee_id  = req.params.employee_id;
@@ -105,14 +158,21 @@ const getAllEmployee = async (req, res) => {
 
 const editAdminData = async (req, res) => {
   try {
-    const id = req.user._id
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(404).json("ID is not correct!!");
+
+    let user_data;
+  
+  const admin=  await Admin.findById(req.user._id);
+if(!admin){
+
+  user_data = await Employee.findById(req.user._id);
+}else{
+  user_data = await Admin.findById(req.user._id);
+}
+    if (!user_data.isManager) {
+      return res.status(400).json('not Available!');
     }
-    const data=await Admin.findById(id)
-    if (!data) {
-      return res.status(404).json("User not found!");
-    }
+
+
     const file = req.files?.find(f => f.fieldname === 'file');
          let link ;
        
@@ -138,11 +198,6 @@ const editAdminData = async (req, res) => {
 
 const get_all_done_tasks = async (req, res) => {
   try {
-    const user_data = await Admin.findById(req.user._id);
-      
-    if (!user_data.isAdmin ) {
-          return res.status(400).json('You are not a Admin!');
-      }
 
    const all_tasks = await DoneTask.find()
    
@@ -155,11 +210,6 @@ const get_all_done_tasks = async (req, res) => {
 const get_det_done_task = async (req, res) => {
   try {
     const task_id=req.params.task_id
-    const user_data = await Admin.findById(req.user._id);
-      
-    if (!user_data.isAdmin ) {
-          return res.status(400).json('You are not a Admin!');
-      }
 
    const done_task = await DoneTask.findById(task_id)
    
@@ -171,41 +221,95 @@ const get_det_done_task = async (req, res) => {
 
 const get_tasks_nearly_not_done = async (req, res) => {
   try {
+
+  
+    const user_data=  await Admin.findById(req.user._id);
+ 
+      if (!user_data.isAdmin) {
+        return res.status(400).json('not Available!');
+      }
+
     const currentDate = new Date();
 
     const tasks = await Task.find({
-      from: { $lte: currentDate }, // المهام التي بدأت بالفعل
-      to: { $gte: currentDate },   // المهام التي لم تنته بعد
+      from: { $lte: currentDate },
+      to: { $gte: currentDate },   
       $expr: {
         $gte: [
           {
             $divide: [
-              { $subtract: [currentDate, "$from"] }, // الوقت المنقضي
-              { $subtract: ["$to", "$from"] }        // المدة الإجمالية
+              { $subtract: [currentDate, "$from"] }, 
+              { $subtract: ["$to", "$from"] }       
             ]
           },
-          0.7 // النسبة المطلوبة: 70% أو أكثر
+          0.7
         ]
       }
     });
 
     if (!tasks) {
-      return res.status(200).json([]); // إذا لم تكن هناك مهام مطابقة
+      return res.status(200).json([]); 
     }
 
-    res.status(200).json(tasks); // عرض المهام المطابقة
+    res.status(200).json(tasks);
   } catch (e) {
     console.error("Error:", e.message);
-    res.status(500).json({ error: e.message }); // معالجة الأخطاء
+    res.status(500).json({ error: e.message });
   }
 };
 
 
 
+const deleteDoneTask = async (req, res) => {
+  try {
+    let user_data;
+  
+    const admin=  await Admin.findById(req.user._id);
+  if(!admin){
+  
+    user_data = await Employee.findById(req.user._id);
+  }else{
+    user_data = await Admin.findById(req.user._id);
+  }
+      if (!user_data.isManager) {
+        return res.status(400).json('You are not ACCESS!');
+      }
+    const  doneTaskId  = req.params.task_id;
+    
+    const doneTask = await DoneTask.findById(doneTaskId);
+    if (!doneTask) {
+      return res.status(404).json('DoneTask not found!');
+    }
+const employees_id = doneTask.employees_id
+    await Employee.updateMany(
+      { _id: { $in: employees_id} }, 
+      { $pull: { task_done: doneTaskId } }  
+    );
+    
+    await DoneTask.findByIdAndDelete(doneTaskId);
+
+    res.status(200).json('DoneTask deleted successfully.');
+  } catch (error) {
+    res.status(500).json(error.message);
+  }
+};
+
 
 
 const deleteEmployee = async (req, res) => {
   try {
+    let user_data;
+  
+  const admin=  await Admin.findById(req.user._id);
+if(!admin){
+
+  user_data = await Employee.findById(req.user._id);
+}else{
+  user_data = await Admin.findById(req.user._id);
+}
+    if (!user_data.isManager) {
+      return res.status(400).json('not Available!');
+    }
     const  employeeId  = req.params.employee_id;
 
    
@@ -243,35 +347,58 @@ const deleteEmployee = async (req, res) => {
   }
 };
 
-const deleteDoneTask = async (req, res) => {
-  try {
-    const  doneTaskId  = req.params.task_id;
 
-    
-    const doneTask = await DoneTask.findById(doneTaskId);
-    if (!doneTask) {
-      return res.status(404).json('DoneTask not found!');
-    }
-
-    
-    await DoneTask.findByIdAndDelete(doneTaskId);
-
-    res.status(200).json('DoneTask deleted successfully.');
-  } catch (error) {
-    res.status(500).json(error.message);
-  }
-};
-
-
-const delete_all_taskings= async(req,res)=>{
+const delete_all_not_done_taskings= async(req,res)=>{
   try{
+    let user_data;
+  
+  const admin=  await Admin.findById(req.user._id);
+if(!admin){
+
+  user_data = await Employee.findById(req.user._id);
+}else{
+  user_data = await Admin.findById(req.user._id);
+}
+    if (!user_data.isManager) {
+      return res.status(400).json('not Available!');
+    }
  await Task.deleteMany()
+ res.status(200).json('All Tasking deleted successfully!')
+  }catch(e){res.status(500).json(e.message)}
+}
+const delete_all_done_taskings= async(req,res)=>{
+  try{
+    let user_data;
+  
+  const admin=  await Admin.findById(req.user._id);
+if(!admin){
+
+  user_data = await Employee.findById(req.user._id);
+}else{
+  user_data = await Admin.findById(req.user._id);
+}
+    if (!user_data.isManager) {
+      return res.status(400).json('not Available!');
+    }
+ await DoneTask.deleteMany()
  res.status(200).json('All Tasking deleted successfully!')
   }catch(e){res.status(500).json(e.message)}
 }
 
 const get_employees_ref_section = async (req, res) => {
   try {
+    let user_data;
+  
+  const admin=  await Admin.findById(req.user._id);
+if(!admin){
+
+  user_data = await Employee.findById(req.user._id);
+}else{
+  user_data = await Admin.findById(req.user._id);
+}
+    if (!user_data.isManager) {
+      return res.status(400).json('not Available!');
+    }
     const section_name = req.body.section_name;
     const sectionToLowerCase = section_name.toLowerCase();
     const employees = await Employee.find({ section: sectionToLowerCase });
@@ -283,10 +410,17 @@ const get_employees_ref_section = async (req, res) => {
 
 const edit_employee_data = async (req, res) => {
   try {
-    const user_data = await Admin.findById(req.user._id);
+    let user_data;
+  
+  const admin=  await Admin.findById(req.user._id);
+if(!admin){
 
+  user_data = await Employee.findById(req.user._id);
+}else{
+  user_data = await Admin.findById(req.user._id);
+}
     if (!user_data.isManager) {
-      return res.status(400).json('You are not an Admin!');
+      return res.status(400).json('not Available!');
     }
 
     const employee_id = req.params.employee_id;
@@ -322,13 +456,13 @@ const edit_employee_data = async (req, res) => {
       case 'edit_data':
         if (updateData.shift) {
           
-          const { shift_from, shift_to } = updateData.shift;
-          if (!shift_from || !shift_to) {
+          const { from, to } = updateData.shift;
+          if (!from || !to) {
             return res.status(400).json('Both from and to dates are required for shift.');
           }
         
-        const fromDate = new Date(shift_from);
-        const toDate = new Date(shift_to);
+        const fromDate = new Date(from);
+        const toDate = new Date(to);
         if (fromDate >= toDate) {
           return res.status(400).json('shift_to must be after shift_from.');
         }
@@ -350,6 +484,19 @@ const edit_employee_data = async (req, res) => {
 
 const get_det_notdone_task = async (req, res) => {
   try {
+    let user_data;
+  
+  const admin=  await Admin.findById(req.user._id);
+if(!admin){
+
+  user_data = await Employee.findById(req.user._id);
+}else{
+  user_data = await Admin.findById(req.user._id);
+}
+    if (!user_data.isManager) {
+      return res.status(400).json('not Available!');
+    }
+
     const task_id=req.params.task_id
 
    const notdone_task = await Task.findById(task_id)
@@ -360,10 +507,21 @@ const get_det_notdone_task = async (req, res) => {
   }
 };
 
-const delete_nearly_Task = async (req, res) => {
+const delete_Task = async (req, res) => {
   try {
 
+  let user_data;
   
+  const admin=  await Admin.findById(req.user._id);
+if(!admin){
+
+  user_data = await Employee.findById(req.user._id);
+}else{
+  user_data = await Admin.findById(req.user._id);
+}
+    if (!user_data.isManager) {
+      return res.status(400).json('not Available!');
+    }
 
     const taskId = req.params.task_id;
 
@@ -388,6 +546,18 @@ const delete_nearly_Task = async (req, res) => {
 
 const update_task = async (req, res) => {
     try {
+      let user_data;
+  
+  const admin=  await Admin.findById(req.user._id);
+if(!admin){
+
+  user_data = await Employee.findById(req.user._id);
+}else{
+  user_data = await Admin.findById(req.user._id);
+}
+    if (!user_data.isManager) {
+      return res.status(400).json('not Available!');
+    }
         const { push_employees_id, remove_employees_id, task_date, from, to, task_heading, task_description } = req.body;
         const task_id = req.params.task_id;
 
@@ -447,28 +617,97 @@ const update_task = async (req, res) => {
     }
 };
 
+const get_all_notdone_tasks = async (req, res) => {
+  try {
+    let user_data;
+  
+  const admin=  await Admin.findById(req.user._id);
+if(!admin){
 
+  user_data = await Employee.findById(req.user._id);
+}else{
+  user_data = await Admin.findById(req.user._id);
+}
+    if (!user_data.isManager) {
+      return res.status(400).json('not Available!');
+    }
+
+   const all_tasks = await Task.find()
+   
+    res.status(200).json(all_tasks);
+  } catch (e) {
+    res.status(500).json(e.message);
+  }
+};
+
+const not_done_tasks_in_section = async (req, res) => {
+  try {
+    let user_data;
+  
+  const admin=  await Admin.findById(req.user._id);
+if(!admin){
+
+  user_data = await Employee.findById(req.user._id);
+}else{
+  user_data = await Admin.findById(req.user._id);
+}
+    if (!user_data.isManager) {
+      return res.status(400).json('not Available!');
+    }
+    const section =req.body.section
+   const all_tasks = await Task.find({section: section})
+   
+    res.status(200).json(all_tasks);
+  } catch (e) {
+    res.status(500).json(e.message);
+  }
+};
+const done_tasks_in_section = async (req, res) => {
+  try {
+    let user_data;
+  
+  const admin=  await Admin.findById(req.user._id);
+if(!admin){
+
+  user_data = await Employee.findById(req.user._id);
+}else{
+  user_data = await Admin.findById(req.user._id);
+}
+    if (!user_data.isManager) {
+      return res.status(400).json(' not Available!');
+    }
+    const section =req.body.section
+   const all_tasks = await DoneTask.find({section: section})
+   
+    res.status(200).json(all_tasks);
+  } catch (e) {
+    res.status(500).json(e.message);
+  }
+};
 
 module.exports = {
-    Register,
-    getEmployee,
-    getAllEmployee,
-    editAdminData,
-    get_tasks_nearly_not_done,
-    get_all_done_tasks,
-    get_det_done_task,
-    deleteEmployee,
-    deleteDoneTask,
-    delete_all_taskings,
-    get_employee_not_verified,
-    verifyEmployeeEmail,
-   remove_verifyEmployeeEmail,
-   get_employees_ref_section,
-   edit_employee_data,
-  delete_nearly_Task,
+  Register,
+  add_task,
+  delete_Task,
+  get_all_notdone_tasks,
+  not_done_tasks_in_section,
+  done_tasks_in_section,
+  getEmployee,
+  getAllEmployee,
+  editAdminData,
+  get_tasks_nearly_not_done,
+  get_all_done_tasks,
+  get_det_done_task,
+  deleteEmployee,
+  deleteDoneTask,
+  get_employee_not_verified,
+  verifyEmployeeEmail,
+  remove_verifyEmployeeEmail,
+  get_employees_ref_section,
+  edit_employee_data,
   get_det_notdone_task,
-  update_task
-    
-   
+  update_task,
+  delete_all_done_taskings,
+  delete_all_not_done_taskings   
 
 }
