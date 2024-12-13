@@ -320,7 +320,21 @@ const edit_employee_data = async (req, res) => {
         break;
 
       case 'edit_data':
-        await Employee.findByIdAndUpdate(employee_id, { ...updateData });
+        if (updateData.shift) {
+          
+          const { shift_from, shift_to } = updateData.shift;
+          if (!shift_from || !shift_to) {
+            return res.status(400).json('Both from and to dates are required for shift.');
+          }
+        
+        const fromDate = new Date(shift_from);
+        const toDate = new Date(shift_to);
+        if (fromDate >= toDate) {
+          return res.status(400).json('shift_to must be after shift_from.');
+        }
+      }
+    
+        await Employee.findByIdAndUpdate(employee_id, { $set: updateData });
         res.status(200).json(`${employee_data.name} data updated successfully!`);
         break;
 
