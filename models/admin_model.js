@@ -55,6 +55,10 @@ var AdminSchema = new mongoose.Schema({
         default:false
     }
   ,
+  isManager:{
+    type:Boolean,
+    default:false
+},
     photo:{
         type:String,
         default:null
