@@ -2,44 +2,11 @@ const jwt = require("jsonwebtoken");
 const Employee = require("../models/employee_model");
 const Admin = require("../models/admin_model");
 
-const auth = async (req, res, next) => {
+
+
+const auth = async (req, res, Next) => {
   try {
-    // if (!req.cookies) {
-    //   return res.status(401).send("Please login!");
-    // }
-    // const token = req.cookies.access_token?.split(" ")[1];
-    if (!req.headers) {
-      return res.status(404).send(" please login !");
-    }
-    console.log(req.headers?.authorization);
-    const token = req?.headers?.authorization.split(" ")[1]
-    if (!token) {
-      return res.status(401).send("Please login!");
-    }
 
-    const SECRETKEY = process.env.SECRETKEY;
-    const decoded = jwt.verify(token, SECRETKEY);
-
-    const user = await Employee.findById(decoded.id);
-    if (!user || !user.tokens.includes(token)) {
-      return res.status(401).send("Please login!");
-    }
-
-    req.user = user;
-    req.token = token;
-    next();
-  } catch (e) {
-    res.status(500).send(e.message);
-  }
-};
-
-
-const adminAuth = async (req, res, Next) => {
-  try {
-    // if (!req.cookies) {
-    //   return res.status(401).send("Please login!");
-    // }
-    // const token = req.cookies.access_token?.split(" ")[1];
     if (!req.headers) {
       return res.status(404).send(" please login !");
     }
@@ -57,19 +24,30 @@ const adminAuth = async (req, res, Next) => {
       return res.status(400).send(" please signup or login !");
     }
 
-    const user_1 = await Admin.findById(result.payload.id);
-    req.user = user_1;
+    let user;
+    const userFromEmployee = await Employee.findById(result.payload.id);
+    const userFromAdmin = await Admin.findById(result.payload.id);
 
-    if (!user_1.isAdmin) {
-      return res.send(" Available for ADMIN ");
+    if (userFromEmployee) {
+      
+      user = userFromEmployee;
+    } else if (userFromAdmin) {
+
+      user = userFromAdmin;
     } else {
-      Next();
+      return res.status(401).send("User not found");
     }
+
+    req.user = user;
+    req.token = token;
+
+    
+    Next();
   } catch (e) {
     res.status(500).send(e.message);
   }
 };
+
 module.exports = {
   auth,
-  adminAuth,
 };
