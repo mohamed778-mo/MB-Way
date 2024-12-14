@@ -90,10 +90,12 @@ var employeeSchema = new mongoose.Schema({
     job:{
         type:String,
     },
-    Shift:{
+     from:{
         type:String,
-        
-    },
+        },
+    to:{
+        type:String,
+        },
     task_notdone:[{
         type:mongoose.Schema.Types.ObjectId,
         ref:'Task'
