@@ -6,7 +6,7 @@ const add_medical_form = async (req, res) => {
     try {
         const file = req.files?.find(f => f.fieldname === 'file');
         let link;
-        
+
         if (file) {
             link = `http://localhost:3000/uploads/${file.filename}`;
         } else {
@@ -33,15 +33,11 @@ const add_medical_form = async (req, res) => {
             return res.status(404).json("Doctor not found");
         }
 
+        const shiftStart = new Date(`${date.split('T')[0]}T${employee.from}:00`);
+        const shiftEnd = new Date(`${date.split('T')[0]}T${employee.to}:00`);
 
-        const shiftStart = new Date(`${date}T${employee.from}:00`);
-       
-        const shiftEnd = new Date(`${date}T${employee.to}:00`);
-        
-
-         const appointmentFrom = new Date(`${date}T${from}:00`);
-         console.log(appointmentFrom)
-        const appointmentTo = new Date(`${date}T${to}:00`);
+        const appointmentFrom = new Date(`${date.split('T')[0]}T${from}:00`);
+        const appointmentTo = new Date(`${date.split('T')[0]}T${to}:00`);
 
         if (appointmentFrom < shiftStart || appointmentTo > shiftEnd) {
             return res.status(400).json("Appointment time must be within the employee's shift.");
@@ -49,7 +45,7 @@ const add_medical_form = async (req, res) => {
 
         const overlappingAppointment = await Appointments.findOne({
             employee_id: employee_id,
-            appointment_date: date,
+            appointment_date: new Date(date),
             $or: [
                 { from: { $lt: appointmentTo, $gte: appointmentFrom } },
                 { to: { $gt: appointmentFrom, $lte: appointmentTo } },
@@ -65,7 +61,7 @@ const add_medical_form = async (req, res) => {
             client_name,
             client_age,
             client_phone,
-            appointment_date: date,
+            appointment_date: new Date(date),
             from: appointmentFrom,
             to: appointmentTo,
             employee_id,
@@ -84,6 +80,7 @@ const add_medical_form = async (req, res) => {
         res.status(500).json(e.message);
     }
 };
+
 
 
 
