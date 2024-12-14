@@ -411,76 +411,99 @@ if(!admin){
 const edit_employee_data = async (req, res) => {
   try {
     let user_data;
-  
-  const admin=  await Admin.findById(req.user._id);
-if(!admin){
 
-  user_data = await Employee.findById(req.user._id);
-}else{
-  user_data = await Admin.findById(req.user._id);
-}
+    const admin = await Admin.findById(req.user._id);
+    if (!admin) {
+      user_data = await Employee.findById(req.user._id);
+    } else {
+      user_data = await Admin.findById(req.user._id);
+    }
+
     if (!user_data.isManager) {
-      return res.status(400).json('not Available!');
+      return res.status(400).json("Not Available!");
     }
 
     const employee_id = req.params.employee_id;
     const employee_data = await Employee.findById(employee_id);
 
     if (!employee_data) {
-      return res.status(404).json('Employee not found!');
+      return res.status(404).json("Employee not found!");
     }
 
-    const { action, updateData } = req.body; 
+    const { action, updateData } = req.body;
 
     switch (action) {
-      case 'add_manager':
+      case "add_manager":
         await Employee.findByIdAndUpdate(employee_id, { isManager: true });
         res.status(200).json(`${employee_data.name} is now a manager!`);
         break;
 
-      case 'remove_manager':
+      case "remove_manager":
         await Employee.findByIdAndUpdate(employee_id, { isManager: false });
         res.status(200).json(`${employee_data.name} is no longer a manager!`);
         break;
 
-      case 'block':
+      case "block":
         await Employee.findByIdAndUpdate(employee_id, { isBlock: true });
         res.status(200).json(`${employee_data.name} is now BLOCKED!`);
         break;
 
-      case 'unblock':
+      case "unblock":
         await Employee.findByIdAndUpdate(employee_id, { isBlock: false });
         res.status(200).json(`${employee_data.name} is now UNBLOCKED!`);
         break;
 
-      case 'edit_data':
-        if (updateData.shift) {
-          
-          const { from, to } = updateData.shift;
+      case "edit_data":
+        if (updateData.from || updateData.to) {
+          const from = updateData.from;
+          const to = updateData.to;
+
           if (!from || !to) {
-            return res.status(400).json('Both from and to dates are required for shift.');
+            return res
+              .status(400)
+              .json("Both from and to times are required for shift.");
           }
-        
-        const fromDate = new Date(from);
-        const toDate = new Date(to);
-        if (fromDate >= toDate) {
-          return res.status(400).json('shift_to must be after shift_from.');
+
+         
+          const fromTime = parseTime(from);
+          const toTime = parseTime(to);
+
+          if (fromTime >= toTime) {
+            return res
+              .status(400)
+              .json("Shift 'to' time must be after 'from' time.");
+          }
+
+          updateData.from = fromTime.toISOString();
+          updateData.to = toTime.toISOString();
         }
-      }
-    
+
         await Employee.findByIdAndUpdate(employee_id, { $set: updateData });
         res.status(200).json(`${employee_data.name} data updated successfully!`);
         break;
 
       default:
-        res.status(400).json('Invalid action!');
+        res.status(400).json("Invalid action!");
     }
-
   } catch (e) {
     res.status(500).json(e.message);
   }
 };
 
+
+function parseTime(time) {
+  const [hours, minutes] = time.split(":").map(Number);
+  const date = new Date();
+  date.setHours(hours, minutes, 0, 0);
+
+
+  if (hours >= 24) {
+    date.setDate(date.getDate() + 1); 
+    date.setHours(hours - 24);
+  }
+
+  return date;
+}
 
 const get_det_notdone_task = async (req, res) => {
   try {
