@@ -86,7 +86,8 @@ const add_medical_form = async (req, res) => {
 
 const get_forms_available = async (req, res) => {
     try {
-        const { employee_id, date } = req.query; // احصل على ID الموظف والتاريخ من الطلب
+        const  date = req.body.date; 
+        const employee_id =req.body.employee_id; 
 
         
         if (!employee_id || !date) {
