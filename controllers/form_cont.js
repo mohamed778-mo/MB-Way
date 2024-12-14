@@ -35,10 +35,12 @@ const add_medical_form = async (req, res) => {
 
 
         const shiftStart = new Date(`${date}T${employee.from}:00`);
+       
         const shiftEnd = new Date(`${date}T${employee.to}:00`);
         
 
-        const appointmentFrom = new Date(`${date}T${from}:00`);
+         const appointmentFrom = new Date(`${date}T${from}:00`);
+         console.log(appointmentFrom)
         const appointmentTo = new Date(`${date}T${to}:00`);
 
         if (appointmentFrom < shiftStart || appointmentTo > shiftEnd) {
