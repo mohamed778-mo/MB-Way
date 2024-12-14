@@ -1,61 +1,149 @@
-const Appointments =require("../models/form_model")
+const Appointments =require("../models/form_medical_model")
 const Employee =require("../models/employee_model")
 
 
-const add_form=async(req,res)=>{
-    try{
+const add_medical_form = async (req, res) => {
+    try {
         const file = req.files?.find(f => f.fieldname === 'file');
-         let link ;
-       
-         if (file) {
+        let link;
+        
+        if (file) {
             link = `http://localhost:3000/uploads/${file.filename}`;
-        }else {link = null;}
+        } else {
+            link = null;
+        }
+
         const {
             client_name,
             client_age,
             client_phone,
+            client_email,
+            gender,
+            reason_visit,
             date,
             from,
             to,
-            employee_id
-        }=req.body
+            employee_id,
+            section,
+            type
+        } = req.body;
 
-        const employee = await Employee.findById(employee_id)
-        if(!employee){
-            return res.status(404).json("doctor not found")
+        const employee = await Employee.findById(employee_id);
+        if (!employee) {
+            return res.status(404).json("Doctor not found");
         }
+
+       
+        const shiftStart = new Date(`${date}T${employee.from}:00`);
+        const shiftEnd = new Date(`${date}T${employee.to}:00`);
+        
+      
+        const appointmentFrom = new Date(`${date}T${from}:00`);
+        const appointmentTo = new Date(`${date}T${to}:00`);
+
+       
+        if (appointmentFrom < shiftStart || appointmentTo > shiftEnd) {
+            return res.status(400).json("Appointment time must be within the employee's shift.");
+        }
+
+       
         const overlappingAppointment = await Appointments.findOne({
             employee_id: employee_id,
             appointment_date: date,
             $or: [
-                { from: { $lt: to, $gte: from } }, 
-                { to: { $gt: from, $lte: to } },  
-                { from: { $lte: from }, to: { $gte: to } } 
+                { from: { $lt: appointmentTo, $gte: appointmentFrom } },
+                { to: { $gt: appointmentFrom, $lte: appointmentTo } },
+                { from: { $lte: appointmentFrom }, to: { $gte: appointmentTo } }
             ]
         });
 
         if (overlappingAppointment) {
             return res.status(400).json("There is already an appointment during this time.");
         }
+
         const new_form = new Appointments({
             client_name,
             client_age,
             client_phone,
-            appointment_date:date,
-            from,
-            to,
+            appointment_date: date,
+            from: appointmentFrom,
+            to: appointmentTo,
             employee_id,
-            employee_name:employee.name,
-            file:link,
-        })
-        new_form.save()
-        res.status(200).json("form is added")
-    }catch(e){
-        res.status(500).json(e.message)
-    }
-}
+            employee_name: employee.name,
+            file: link,
+            client_email,
+            gender,
+            reason_visit,
+            section,
+            type
+        });
 
-const get_forms=async(req,res)=>{
+        await new_form.save();
+        res.status(200).json("Form is added");
+    } catch (e) {
+        res.status(500).json(e.message);
+    }
+};
+
+
+
+const get_forms_available = async (req, res) => {
+    try {
+        const requestedDate = req.body.date;
+
+        if (!requestedDate) {
+            return res.status(400).json("Please provide a date.");
+        }
+
+        const startOfDay = new Date(requestedDate);
+        startOfDay.setHours(0, 0, 0, 0);
+
+        const endOfDay = new Date(requestedDate);
+        endOfDay.setHours(23, 59, 59, 999);
+
+        const forms = await Appointments.find({
+            appointment_date: { $gte: startOfDay, $lte: endOfDay }
+        }).populate('employee_id');
+
+        const availableForms = forms.filter(form => {
+            const employee = form.employee_id;
+
+            if (!employee || !employee.shift || !employee.shift.from || !employee.shift.to) {
+                return false;
+            }
+
+            const shiftStart = new Date(`${requestedDate}T${employee.shift.from}:00`);
+            const shiftEnd = new Date(`${requestedDate}T${employee.shift.to}:00`);
+            const formStart = new Date(`${requestedDate}T${form.from}:00`);
+            const formEnd = new Date(`${requestedDate}T${form.to}:00`);
+
+            return (
+                formStart >= shiftStart &&
+                formEnd <= shiftEnd &&
+                formStart >= startOfDay &&
+                formEnd <= endOfDay
+            );
+        });
+
+    
+        const availableDates = availableForms.map(form => {
+            const from = form.from.split(':').join(':');
+            const to = form.to.split(':').join(':');
+            return `${from} - ${to}`;
+        });
+
+        res.status(200).json(availableDates);
+
+    } catch (e) {
+        res.status(500).json({ message: e.message });
+    }
+};
+
+
+
+
+
+const get_medical_forms=async(req,res)=>{
     try{
         const forms = await Appointments.find()
         res.status(200).json(forms)
@@ -64,7 +152,7 @@ const get_forms=async(req,res)=>{
     }    
 }
 
-const get_form_by_id=async(req,res)=>{
+const get_form_medical_by_id=async(req,res)=>{
     try{
         const form_id = req.params.form_id
         const form = await Appointments.findById(form_id)
@@ -77,7 +165,7 @@ const get_form_by_id=async(req,res)=>{
     }    
 }
 
-const get_my_forms_by_employee_id=async(req,res)=>{
+const get_my_forms_medical_by_employee_id=async(req,res)=>{
     try{
         const employee_id = req.params.employee_id
         const forms = await Appointments.find({employee_id: employee_id})
@@ -90,7 +178,7 @@ const get_my_forms_by_employee_id=async(req,res)=>{
     }    
 }
 
-const update_form=async(req,res)=>{
+const update_medical_form=async(req,res)=>{
     try{
         const form_id = req.params.form_id
         const data =req.body
@@ -114,7 +202,7 @@ const update_form=async(req,res)=>{
     }
 }
 
-const delete_form=async(req,res)=>{
+const delete_medical_form=async(req,res)=>{
     try{
         const form_id = req.params.form_id
         const form = await Appointments.findByIdAndDelete(form_id)
@@ -126,7 +214,7 @@ const delete_form=async(req,res)=>{
         res.status(500).json(e.message)
     }
 }
-const delete_all_forms=async(req,res)=>{
+const delete_medical_all_forms=async(req,res)=>{
     try{
         await Appointments.deleteMany()
         res.status(200).json("all forms deleted")
@@ -136,11 +224,12 @@ const delete_all_forms=async(req,res)=>{
 }
 
 module.exports={
-    add_form,
-    get_forms,
-    get_form_by_id,
-    update_form,
-    delete_form,
-    delete_all_forms,
-    get_my_forms_by_employee_id
+    add_medical_form,
+    get_forms_available,
+    get_medical_forms,
+    get_form_medical_by_id,
+    update_medical_form,
+    delete_medical_form,
+    delete_medical_all_forms,
+    get_my_forms_medical_by_employee_id
 }
