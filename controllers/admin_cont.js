@@ -474,8 +474,8 @@ const edit_employee_data = async (req, res) => {
               .json("Shift 'to' time must be after 'from' time.");
           }
 
-          updateData.from = fromTime.toISOString();
-          updateData.to = toTime.toISOString();
+          updateData.from = from
+          updateData.to = to
         }
 
         await Employee.findByIdAndUpdate(employee_id, { $set: updateData });
