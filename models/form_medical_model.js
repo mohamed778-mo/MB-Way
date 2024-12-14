@@ -20,10 +20,10 @@ var AppointmentsSchema = new mongoose.Schema({
         type:Date,
     },
     from:{
-        type:String,
+        type:Date,
         },
     to:{
-        type:String,
+        type:Date,
         },
    section:{
     type:String,
