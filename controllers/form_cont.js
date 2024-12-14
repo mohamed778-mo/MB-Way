@@ -6,7 +6,7 @@ const add_medical_form = async (req, res) => {
     try {
         const file = req.files?.find(f => f.fieldname === 'file');
         let link;
-        
+
         if (file) {
             link = `http://localhost:3000/uploads/${file.filename}`;
         } else {
@@ -33,20 +33,29 @@ const add_medical_form = async (req, res) => {
             return res.status(404).json("Doctor not found");
         }
 
-       
         const shiftStart = new Date(`${date}T${employee.from}:00`);
         const shiftEnd = new Date(`${date}T${employee.to}:00`);
-        
-      
+
         const appointmentFrom = new Date(`${date}T${from}:00`);
         const appointmentTo = new Date(`${date}T${to}:00`);
 
-       
         if (appointmentFrom < shiftStart || appointmentTo > shiftEnd) {
             return res.status(400).json("Appointment time must be within the employee's shift.");
         }
 
-       
+        // التحقق من وجود ميعاد مطابق تمامًا
+        const exactMatch = await Appointments.findOne({
+            employee_id: employee_id,
+            appointment_date: date,
+            from: appointmentFrom,
+            to: appointmentTo
+        });
+
+        if (exactMatch) {
+            return res.status(400).json("Appointment already exists for this time.");
+        }
+
+   
         const overlappingAppointment = await Appointments.findOne({
             employee_id: employee_id,
             appointment_date: date,
@@ -58,7 +67,7 @@ const add_medical_form = async (req, res) => {
         });
 
         if (overlappingAppointment) {
-            return res.status(400).json("There is already an appointment during this time.");
+            return res.status(400).json("There is already an overlapping appointment during this time.");
         }
 
         const new_form = new Appointments({
@@ -66,8 +75,8 @@ const add_medical_form = async (req, res) => {
             client_age,
             client_phone,
             appointment_date: date,
-            from,
-            to,
+            from: appointmentFrom,
+            to: appointmentTo,
             employee_id,
             employee_name: employee.name,
             file: link,
