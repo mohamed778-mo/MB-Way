@@ -86,51 +86,59 @@ const add_medical_form = async (req, res) => {
 
 const get_forms_available = async (req, res) => {
     try {
-        const requestedDate = req.body.date;
+        const { employee_id, date } = req.query; // احصل على ID الموظف والتاريخ من الطلب
 
-        if (!requestedDate) {
-            return res.status(400).json("Please provide a date.");
+        
+        if (!employee_id || !date) {
+            return res.status(400).json({ message: "Employee ID and date are required." });
         }
 
-        const startOfDay = new Date(requestedDate);
-        startOfDay.setHours(0, 0, 0, 0);
+      
+        const employee = await Employee.findById(employee_id);
+        if (!employee) {
+            return res.status(404).json({ message: "Employee not found." });
+        }
 
-        const endOfDay = new Date(requestedDate);
-        endOfDay.setHours(23, 59, 59, 999);
 
-        const forms = await Appointments.find({
-            appointment_date: { $gte: startOfDay, $lte: endOfDay }
-        }).populate('employee_id');
+        const shiftStart = new Date(`${date}T${employee.from}:00`);
+        const shiftEnd = new Date(`${date}T${employee.to}:00`);
 
-        const availableForms = forms.filter(form => {
-            const employee = form.employee_id;
+      
+        const bookedAppointments = await Appointments.find({
+            employee_id,
+            appointment_date: date
+        });
 
-            if (!employee || !employee.shift || !employee.shift.from || !employee.shift.to) {
-                return false;
+        const bookedTimes = bookedAppointments.map(appointment => ({
+            from: new Date(appointment.from),
+            to: new Date(appointment.to)
+        }));
+
+      
+        let availableSlots = [];
+        let currentSlotStart = new Date(shiftStart);
+
+        while (currentSlotStart < shiftEnd) {
+            const currentSlotEnd = new Date(currentSlotStart.getTime() + 60 * 60 * 1000); // أضف ساعة
+
+     
+            const isBooked = bookedTimes.some(booked => (
+                (currentSlotStart >= booked.from && currentSlotStart < booked.to) ||
+                (currentSlotEnd > booked.from && currentSlotEnd <= booked.to)
+            ));
+
+            if (!isBooked) {
+                availableSlots.push({
+                    from: currentSlotStart.toTimeString().slice(0, 5),
+                    to: currentSlotEnd.toTimeString().slice(0, 5)
+                });
             }
 
-            const shiftStart = new Date(`${requestedDate}T${employee.shift.from}:00`);
-            const shiftEnd = new Date(`${requestedDate}T${employee.shift.to}:00`);
-            const formStart = new Date(`${requestedDate}T${form.from}:00`);
-            const formEnd = new Date(`${requestedDate}T${form.to}:00`);
+          
+            currentSlotStart = currentSlotEnd;
+        }
 
-            return (
-                formStart >= shiftStart &&
-                formEnd <= shiftEnd &&
-                formStart >= startOfDay &&
-                formEnd <= endOfDay
-            );
-        });
-
-    
-        const availableDates = availableForms.map(form => {
-            const from = form.from.split(':').join(':');
-            const to = form.to.split(':').join(':');
-            return `${from} - ${to}`;
-        });
-
-        res.status(200).json(availableDates);
-
+        res.status(200).json(availableSlots);
     } catch (e) {
         res.status(500).json({ message: e.message });
     }
