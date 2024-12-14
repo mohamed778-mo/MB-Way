@@ -10,15 +10,27 @@ var AppointmentsSchema = new mongoose.Schema({
     client_phone:{
         type:String,
     },
+    client_email:{
+        type:String,
+    },
+    gender:{
+        type:String,
+    },
     appointment_date:{
         type:Date,
     },
     from:{
-        type:Date,
-    },
+        type:String,
+        },
     to:{
-        type:Date,
-    },
+        type:String,
+        },
+   section:{
+    type:String,
+   },
+   type:{
+    type:String,
+   },
     file:{
         type:String,
     },
@@ -27,6 +39,9 @@ var AppointmentsSchema = new mongoose.Schema({
         ref:'Employee'
     },
     employee_name:{
+        type:String,
+    },
+    reason_visit:{
         type:String,
     }
 });
