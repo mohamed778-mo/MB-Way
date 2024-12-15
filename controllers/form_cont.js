@@ -171,7 +171,7 @@ const get_form_medical_by_id=async(req,res)=>{
 
 const get_my_forms_medical_by_employee_id=async(req,res)=>{
     try{
-        const employee_id = req.params.employee_id
+        const employee_id = req.user._id
         const forms = await Appointments.find({employee_id: employee_id})
         if(!forms){
             return res.status(404).json("forms not found")
