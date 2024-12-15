@@ -15,7 +15,7 @@ const{
 }=require("../controllers/form_cont")
 
 router.post("/add_form",Istorage.any(),add_medical_form)
-router.get("/get_forms_available",get_forms_available)
+router.put("/get_forms_available",get_forms_available)
 router.get("/get_forms",get_medical_forms)
 router.get("/get_form/:form_id",get_form_medical_by_id)
 router.put("/update_form/:form_id",update_medical_form)
