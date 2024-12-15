@@ -106,7 +106,7 @@ const get_forms_available = async (req, res) => {
 
       
         const bookedAppointments = await Appointments.find({
-            employee_id,
+             employee_id:employee_id,
             appointment_date: date
         });
 
