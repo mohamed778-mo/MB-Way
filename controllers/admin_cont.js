@@ -399,7 +399,7 @@ if(!admin){
     if (!user_data.isManager) {
       return res.status(400).json('not Available!');
     }
-    const section_name = req.body.section_name;
+    const section_name = req.body.section;
     const sectionToLowerCase = section_name.toLowerCase();
     const employees = await Employee.find({ section: sectionToLowerCase });
     res.status(200).json(employees);
