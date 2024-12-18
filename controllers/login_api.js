@@ -24,7 +24,7 @@ const Login = async (req, res) => {
     const { role, email, password } = req.body;
 
     if (!role || !email || !password) {
-      return res.status(400).json({ error: "All fields are required" });
+      return res.status(400).json( "All fields are required" );
     }
 
     let user;
@@ -33,26 +33,26 @@ const Login = async (req, res) => {
     } else if (role === "Employee") {
       user = await Employee.findOne({ email });
     } else {
-      return res.status(400).json({ error: "Invalid role" });
+      return res.status(400).json( "Invalid role" );
     }
 
     if (!user) {
-      return res.status(401).json({ error: "Invalid email or password" });
+      return res.status(401).json( "Invalid email or password" );
     }
 
     if (role === "Employee") {
       if (user.isBlock) {
-        return res.status(403).json({ error: "You are blocked" });
+        return res.status(403).json( "You are blocked" );
       }
 
       if (!user.verified) {
-        return res.status(400).json({ error: "Please wait for verification" });
+        return res.status(400).json( "Please wait for verification" );
       }
     }
 
     const isPasswordValid = await bcryptjs.compare(password, user.password);
     if (!isPasswordValid) {
-      return res.status(401).json({ error: "Invalid email or password" });
+      return res.status(401).json( "Invalid email or password" );
     }
 
     const token = generateTokenAndSetCookie(res, user._id);
@@ -71,7 +71,7 @@ const Login = async (req, res) => {
       role:role
     });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json( error.message );
   }
 };
 
