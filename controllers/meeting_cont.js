@@ -217,61 +217,59 @@ const update_meeting = async (req, res) => {
 
     const meeting_id = req.params.meeting_id;
 
-
     const meeting = await Meeting.findById(meeting_id);
     if (!meeting) {
       return res.status(404).json('Meeting not found');
     }
 
-
+    
     if (push_employees && push_employees.length > 0) {
      
       const existingEmployeeIds = meeting.employees.map((emp) =>
         emp.employee_id.toString()
       );
 
- 
       const newEmployeeIds = push_employees.filter(
         (empId) => !existingEmployeeIds.includes(empId)
       );
 
-     
-      const newEmployees = await Employee.find({ _id: { $in: newEmployeeIds } }).select(
-        'name role photo'
-      );
+  
+      if (newEmployeeIds.length > 0) {
+        const newEmployees = await Employee.find({ _id: { $in: newEmployeeIds } }).select(
+          'name role photo'
+        );
 
-     
-      meeting.employees.push(
-        ...newEmployees.map((emp) => ({
-          employee_id: emp._id,
-          name: emp.name,
-          role: emp.role,
-          photo: emp.photo,
-        }))
-      );
+        meeting.employees.push(
+          ...newEmployees.map((emp) => ({
+            employee_id: emp._id,
+            name: emp.name,
+            role: emp.role,
+            photo: emp.photo,
+          }))
+        );
 
-   
-      await Employee.updateMany(
-        { _id: { $in: newEmployeeIds } },
-        { $push: { meetings: meeting._id } }
-      );
+      
+        await Employee.updateMany(
+          { _id: { $in: newEmployeeIds } },
+          { $push: { meetings: meeting._id } }
+        );
+      }
     }
 
  
     if (remove_employees && remove_employees.length > 0) {
-     
       meeting.employees = meeting.employees.filter(
         (emp) => !remove_employees.includes(emp.employee_id.toString())
       );
 
-      
+      // Update employee meetings
       await Employee.updateMany(
         { _id: { $in: remove_employees } },
         { $pull: { meetings: meeting._id } }
       );
     }
 
- 
+    // Update meeting details
     if (meeting_date) meeting.meeting_date = meeting_date;
     if (from) meeting.from = from;
     if (to) meeting.to = to;
@@ -279,7 +277,7 @@ const update_meeting = async (req, res) => {
     if (meeting_heading) meeting.meeting_heading = meeting_heading;
     if (meeting_description) meeting.meeting_description = meeting_description;
 
-    
+    // Save updated meeting
     await meeting.save();
 
     res.status(200).json('Meeting updated successfully!');
@@ -287,6 +285,7 @@ const update_meeting = async (req, res) => {
     res.status(500).json(e.message);
   }
 };
+
 
   
   const delete_all_meeting= async(req,res)=>{
