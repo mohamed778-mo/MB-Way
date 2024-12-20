@@ -565,7 +565,9 @@ if(!admin){
   } catch (error) {
     res.status(500).json(error.message);
   }
-};const update_task = async (req, res) => {
+};
+
+const update_task = async (req, res) => {
     try {
         let user_data;
 
@@ -597,29 +599,36 @@ if(!admin){
             return res.status(404).json('Task not found');
         }
 
-      
+     
         if (push_employees_id && push_employees_id.length > 0) {
-            const newEmployees = await Employee.find({
-                _id: { $in: push_employees_id },
-            }).select('name role photo');
-            const formattedEmployees = newEmployees.map((employee) => ({
-                employee_id: employee._id,
-                name: employee.name,
-                role: employee.role,
-                photo: employee.photo,
-            }));
+            const existingEmployeeIds = task.employees.map((emp) => emp.employee_id.toString());
 
-            await Task.findByIdAndUpdate(task_id, {
-                $addToSet: { employees: { $each: formattedEmployees } },
-            });
-
-            await Employee.updateMany(
-                { _id: { $in: push_employees_id } },
-                { $push: { task_notdone: task._id } }
+      
+            const newEmployeeIds = push_employees_id.filter(
+                (empId) => !existingEmployeeIds.includes(empId)
             );
+
+            if (newEmployeeIds.length > 0) {
+                const newEmployees = await Employee.find({ _id: { $in: newEmployeeIds } }).select('name role photo');
+                const formattedEmployees = newEmployees.map((employee) => ({
+                    employee_id: employee._id,
+                    name: employee.name,
+                    role: employee.role,
+                    photo: employee.photo,
+                }));
+
+                await Task.findByIdAndUpdate(task_id, {
+                    $addToSet: { employees: { $each: formattedEmployees } },
+                });
+
+                await Employee.updateMany(
+                    { _id: { $in: newEmployeeIds } },
+                    { $push: { task_notdone: task._id } }
+                );
+            }
         }
 
-     
+      
         if (remove_employees_id && remove_employees_id.length > 0) {
             await Task.findByIdAndUpdate(task_id, {
                 $pull: { employees: { employee_id: { $in: remove_employees_id } } },
@@ -631,6 +640,7 @@ if(!admin){
             );
         }
 
+     
         if (task_date) task.task_date = new Date(task_date);
         if (from) task.from = new Date(from);
         if (to) task.to = new Date(to);
@@ -645,6 +655,7 @@ if(!admin){
         res.status(500).json(e.message);
     }
 };
+
 
 const get_all_notdone_tasks = async (req, res) => {
   try {
