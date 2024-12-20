@@ -565,23 +565,31 @@ if(!admin){
   } catch (error) {
     res.status(500).json(error.message);
   }
-};
-
-const update_task = async (req, res) => {
+};const update_task = async (req, res) => {
     try {
-      let user_data;
-  
-  const admin=  await Admin.findById(req.user._id);
-if(!admin){
+        let user_data;
 
-  user_data = await Employee.findById(req.user._id);
-}else{
-  user_data = await Admin.findById(req.user._id);
-}
-    if (!user_data.isManager) {
-      return res.status(400).json('not Available!');
-    }
-        const { push_employees_id, remove_employees_id, task_date, from, to, task_heading, task_description } = req.body;
+        const admin = await Admin.findById(req.user._id);
+        if (!admin) {
+            user_data = await Employee.findById(req.user._id);
+        } else {
+            user_data = await Admin.findById(req.user._id);
+        }
+
+        if (!user_data.isManager) {
+            return res.status(400).json('Not Available!');
+        }
+
+        const {
+            push_employees_id,
+            remove_employees_id,
+            task_date,
+            from,
+            to,
+            task_heading,
+            task_description,
+        } = req.body;
+
         const task_id = req.params.task_id;
 
         const task = await Task.findById(task_id);
@@ -589,9 +597,11 @@ if(!admin){
             return res.status(404).json('Task not found');
         }
 
- 
-        if (push_employees_id) {
-            const newEmployees = await Employee.find({ _id: { $in: push_employees_id } }).select('name role photo');
+      
+        if (push_employees_id && push_employees_id.length > 0) {
+            const newEmployees = await Employee.find({
+                _id: { $in: push_employees_id },
+            }).select('name role photo');
             const formattedEmployees = newEmployees.map((employee) => ({
                 employee_id: employee._id,
                 name: employee.name,
@@ -609,8 +619,8 @@ if(!admin){
             );
         }
 
-
-        if (remove_employees_id) {
+     
+        if (remove_employees_id && remove_employees_id.length > 0) {
             await Task.findByIdAndUpdate(task_id, {
                 $pull: { employees: { employee_id: { $in: remove_employees_id } } },
             });
@@ -622,12 +632,8 @@ if(!admin){
         }
 
         if (task_date) task.task_date = new Date(task_date);
-        if (from){
-           task.from = new Date(from)
-        } 
-        if (to) {
-          task.to = new Date(to)
-        }
+        if (from) task.from = new Date(from);
+        if (to) task.to = new Date(to);
         if (task_heading) task.task_heading = task_heading;
         if (task_description) task.task_description = task_description;
 
