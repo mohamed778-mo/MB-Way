@@ -26,7 +26,7 @@ let ConsultationSchema = new mongoose.Schema({
         type: String,
     },
     project_type: {
-        type: Number,
+        type: String,
     },
     type_of_consultation_required: {
         type: String,
