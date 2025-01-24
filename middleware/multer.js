@@ -3,9 +3,9 @@ const path = require('path')
 
 const Istorage = multer.diskStorage({
 
-    destination: (req, file, cb) => {
-      cb(null, path.join(__dirname, '../uploads'));
-    },
+    // destination: (req, file, cb) => {
+    //   cb(null, path.join(__dirname, '../uploads'));
+    // },
     
     
     filename:(req,file,cb)=>{
