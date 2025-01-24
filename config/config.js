@@ -5,10 +5,8 @@ const connection = ()=>{
    mongoose.connect(URL, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
-});
-
-    .then(()=>{console.log('done connection !!')})
-    .catch((error)=>{console.log(error.message)})
+}).then(()=>{console.log('done connection !!')})
+  .catch((error)=>{console.log(error.message)})
 }
 
 module.exports = connection
