@@ -108,3 +108,5 @@ if (cluster.isMaster) {
 
     module.exports = app;
 }
+    module.exports = app;
+
