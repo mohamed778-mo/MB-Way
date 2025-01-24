@@ -9,30 +9,30 @@ const path = require('path');
 const http = require('http');
 const { Server } = require('socket.io');
 
-// إنشاء تطبيق Express
+
 const app = express();
 
-// Middleware للأمان
+
 app.use(helmet());
 
-// Middleware لـ CORS
+
 app.use(cors({
     origin: '*',
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
-// Middleware لتحليل البيانات
+
 app.use(bodyParser.json({ limit: '1gb', extended: true }));
 app.use(bodyParser.urlencoded({ limit: '1gb', extended: true }));
 
-// Middleware لملفات تعريف الارتباط
+
 app.use(cookieParser());
 
-// الاتصال بقاعدة البيانات
+
 connection();
 
-// إعداد خادم HTTP و Socket.IO
+
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
@@ -41,7 +41,7 @@ const io = new Server(server, {
     },
 });
 
-// استيراد المسارات (routers)
+
 const adminRouter = require('./routers/admin_router');
 const employeeRouter = require('./routers/empolyee_router');
 const chatRouter = require('./routers/chat_router');
@@ -52,7 +52,7 @@ const loginRouter = require('./routers/login_router');
 const engRouter = require('./routers/Eng_router');
 const dashboardRouter = require('./routers/website/dashboard_router');
 
-// تعريف المسارات
+
 app.use('/app/choice', loginRouter);
 app.use('/app/chat', chatRouter);
 app.use('/app/admin', adminRouter);
@@ -63,10 +63,10 @@ app.use('/app/user', FRpasswordRouter);
 app.use('/app/eng', engRouter);
 app.use('/app/dashboard', dashboardRouter);
 
-// إعداد المسار للملفات الثابتة
+
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// التعامل مع اتصال Socket.IO
+
 io.on('connection', (socket) => {
     console.log('A user connected:', socket.id);
 
@@ -83,7 +83,7 @@ io.on('connection', (socket) => {
     });
 });
 
-// بدء الخادم
+
 const port = 3000;
 server.listen(port, () => {
     console.log(`Server is running on port ${port}`);
