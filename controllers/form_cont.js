@@ -227,6 +227,8 @@ const delete_medical_all_forms=async(req,res)=>{
     }
 }
 
+
+
 module.exports={
     add_medical_form,
     get_forms_available,

@@ -33,6 +33,12 @@ const auth = async (req, res, Next) => {
       user = userFromEmployee;
     } else if (userFromAdmin) {
 
+      if(!userFromAdmin.isAdmin){
+        return res.status(403).send("You are not Admin !!");
+      }
+      if(!userFromAdmin.isManager){
+        return res.status(403).send("You are not Manager !!");
+      }
       user = userFromAdmin;
     } else {
       return res.status(401).send("User not found");
