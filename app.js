@@ -11,6 +11,8 @@ const path = require('path');
 const http = require('http');
 const { Server } = require('socket.io');
 
+const app = express();
+
 const numCPUs = os.cpus().length;
 
 if (cluster.isMaster) {
@@ -26,7 +28,7 @@ if (cluster.isMaster) {
         cluster.fork();
     });
 } else {
-    const app = express();
+    
 
    
     app.use(helmet());
