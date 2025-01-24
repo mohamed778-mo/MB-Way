@@ -108,7 +108,6 @@ if (cluster.isMaster) {
         console.log(`Worker server is running on port ${port} with PID: ${process.pid}`);
     });
 
-    module.exports = app;
+    
 }
-
-
+    module.exports = app;
