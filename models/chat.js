@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 
+
 var chatSchema = new mongoose.Schema({
     sender: {
         type: mongoose.Schema.Types.ObjectId,
@@ -23,10 +24,10 @@ var chatSchema = new mongoose.Schema({
     },
     content: {
         type: String,
+        maxlength: 1000,
     },
     attachment: {
         type: String,
-   
     },
     timestamp: {
         type: Date,
@@ -37,5 +38,6 @@ var chatSchema = new mongoose.Schema({
         default: false,
     },
 });
+
 
 module.exports = mongoose.model('Chat', chatSchema);
