@@ -1,5 +1,5 @@
 const nodemailer = require("nodemailer");
-
+const mongoose = require("mongoose");
 require("dotenv").config();
 
 const Consultation = require('../models/eng/consultation_eng_model');
@@ -295,7 +295,7 @@ const updateCustoms = async (req, res) => {
             updatedData.acknowledgment_and_pledge = `http://localhost:3000/uploads/${acknowledgmentFile.filename}`;
         }
 
-        // تحديث الوثيقة في قاعدة البيانات
+      
         const customs = await Customs.findByIdAndUpdate(id, updatedData, { new: true });
 
         if (!customs) {
