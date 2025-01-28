@@ -22,6 +22,7 @@ let BuyequipmentSchema = new mongoose.Schema({
 
 steps: [{
     location: String,
+    step:String,
     late_reason: String,
     didnot_start: Boolean,
     in_progress: Boolean,
