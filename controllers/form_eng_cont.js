@@ -692,17 +692,15 @@ const deleteStepsForEquipment = async (req, res) => {
             return res.status(403).json("You are not authorized to access this page!");
         }
 
-        const equipmentId = req.params.BuyEquipment_id ;
-        const ifFound = await BuyEquipment.findOne({
-        'equipment.equipment_id': equipmentId
-       });
+        const BuyequipmentId = req.params.BuyEquipment_id ;
+        const ifFound = await BuyEquipment.findById(BuyequipmentId);
 
     if (!ifFound) {
         return res.status(404).json({ message: 'Equipment not found in BuyEquipment' });
     }
        
         const result = await BuyEquipment.updateOne(
-            { "equipment.equipment_id": equipmentId }, 
+            { "_id": BuyequipmentId }, 
             { $set: { steps: [] } }
         );
 
