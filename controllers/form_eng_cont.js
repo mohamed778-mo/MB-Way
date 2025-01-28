@@ -596,6 +596,7 @@ const deleteBuyEquipment = async (req, res) => {
 };
 
 
+////////////////////////////////////////////////////////////////
 
 const updateSteps = async (req, res) => {
     try {
@@ -655,6 +656,32 @@ const updateSteps = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+
+const deleteStepsForEquipment = async (req, res) => {
+    try {
+        const user = req.user; 
+        if (!user.isAdmin) {
+            return res.status(403).json("You are not authorized to access this page!");
+        }
+
+        const equipmentId = req.params.equipment_id ;
+
+       
+        const result = await BuyEquipment.updateOne(
+            { "equipment.equipment_id": equipmentId }, 
+            { $set: { steps: [] } }
+        );
+
+        if (result.matchedCount === 0) {
+            return res.status(404).json("Equipment not found");
+        }
+
+        res.status(200).json("Steps deleted successfully");
+    } catch (error) {
+        res.status(500).json(error.message);
+    }
+};
+
 
 
 
@@ -975,5 +1002,6 @@ module.exports = {
     updateSiteEng,
     deleteSiteEng,
 
-    updateSteps
+    updateSteps,
+    deleteStepsForEquipment
 }
