@@ -664,7 +664,7 @@ const deleteStepsForEquipment = async (req, res) => {
             return res.status(403).json("You are not authorized to access this page!");
         }
 
-        const equipmentId = req.params.equipment_id ;
+        const equipmentId = req.params.BuyEquipment_id ;
 
        
         const result = await BuyEquipment.updateOne(
