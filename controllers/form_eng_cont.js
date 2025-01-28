@@ -634,6 +634,7 @@ const updateSteps = async (req, res) => {
                 if (step.complete) status = "تم الانتهاء منها";
 
                 emailContent += `<p>المعدة في مرحلة: ${status}</p>`;
+                if (step.step) emailContent += `<p>تفاصيل المرحله: ${step.step}</p>`;
                 if (step.location) emailContent += `<p>الموقع: ${step.location}</p>`;
                 if (step.late_reason) emailContent += `<p>سبب التأخير: ${step.late_reason}</p>`;
             });
