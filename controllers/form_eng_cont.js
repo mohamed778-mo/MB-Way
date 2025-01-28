@@ -469,23 +469,51 @@ const createBuyEquipment = async (req, res) => {
     try {
         const { company_name, email, phone, equipment } = req.body;
 
-      
+
         if (!Array.isArray(equipment) || equipment.length === 0) {
             return res.status(400).json("Equipment list is required and should be an array of IDs");
         }
 
-      
+  
         const validEquipmentIds = equipment.every((id) => mongoose.Types.ObjectId.isValid(id));
         if (!validEquipmentIds) {
             return res.status(400).json("All equipment IDs must be valid ObjectIds");
         }
+
+
+        const equipmentDetails = await Equipment.find({
+            _id: { $in: equipment },
+        });
+
+        if (equipmentDetails.length !== equipment.length) {
+            return res.status(404).json("Some equipment IDs are not found");
+        }
+
+      
+        const equipmentData = equipmentDetails.map((eq) => ({
+            equipment_id: eq._id,
+            equipment_name: eq.equipment_name,
+            equipment_type: eq.equipment_type,
+            image: eq.image,
+            model: eq.model,
+            serial_number: eq.serial_number,
+            brand: eq.brand,
+            start: eq.start,
+            end: eq.end,
+            price: eq.price,
+            quantity: eq.quantity,
+            warranty_duration: eq.warranty_duration,
+            condition_equipment: eq.condition_equipment,
+            which_is_covered_by_the_warranty: eq.which_is_covered_by_the_warranty,
+            the_party_responsible_for_the_guarantee: eq.the_party_responsible_for_the_guarantee,
+        }));
 
        
         const newBuyEquipment = new BuyEquipment({
             company_name,
             email,
             phone,
-            equipment: equipment.map((id) => ({ equipment_id: id })), 
+            equipment: equipmentData, 
         });
 
         await newBuyEquipment.save();
