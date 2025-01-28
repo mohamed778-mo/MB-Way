@@ -693,16 +693,20 @@ const deleteStepsForEquipment = async (req, res) => {
         }
 
         const equipmentId = req.params.BuyEquipment_id ;
+        const ifFound = await BuyEquipment.findOne({
+        'equipment.equipment_id': equipmentId
+       });
 
+    if (!ifFound) {
+        return res.status(404).json({ message: 'Equipment not found in BuyEquipment' });
+    }
        
         const result = await BuyEquipment.updateOne(
             { "equipment.equipment_id": equipmentId }, 
             { $set: { steps: [] } }
         );
 
-        if (result.matchedCount === 0) {
-            return res.status(404).json("Equipment not found");
-        }
+      
 
         res.status(200).json("Steps deleted successfully");
     } catch (error) {
