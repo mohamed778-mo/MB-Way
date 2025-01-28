@@ -43,7 +43,8 @@ const {
     updateSiteEng,
     deleteSiteEng,
 
-    updateSteps }=require("../controllers/form_eng_cont")
+    updateSteps ,
+deleteStepsForEquipment }=require("../controllers/form_eng_cont")
 
     router.post('/create_consultation',Iupload.any(), createConsultation)
     router.get('/get_all_consultations',auth, getAllConsultations)
@@ -82,6 +83,8 @@ const {
     router.delete('/delete_site_eng/:id',auth, deleteSiteEng)
     
     router.put('/update_steps/:BuyEquipment_id',auth, updateSteps)
+    router.delete('/delete_steps/:BuyEquipment_id',auth, deleteStepsForEquipment)
+
 
 
 
