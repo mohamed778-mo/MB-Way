@@ -1,12 +1,18 @@
 const mongoose = require('mongoose');
-
+const validator=require('validator')
 let BuyequipmentSchema = new mongoose.Schema({
     company_name:{
         type:String,
     },
     email:{
         type:String,
-        required:true
+        required:true,
+        trim:true,
+        validate(valu){
+            if(!validator.isEmail(valu)){
+                throw new Error("Invalid email")
+            }
+        }
     },
     phone:{
         type:String,
