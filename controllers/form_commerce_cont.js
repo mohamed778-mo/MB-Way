@@ -12,6 +12,7 @@ const createProduct = async (req, res) => {
 
         const {
             product_name,
+            choice,
             quantity,
             price,
             products_type,
@@ -26,6 +27,7 @@ const createProduct = async (req, res) => {
 
         const newProduct = new Product({
             product_name,
+            choice,
             image: productImageFile ? `http://localhost:3000/uploads/${productImageFile.filename}` : null, 
             quantity,
             price,
@@ -51,7 +53,8 @@ const getAllProducts = async (req, res) => {
         if (!user || !user.isManager) {
             return res.status(403).json("You are not accessing this page!");
         }
-        const products = await Product.find();
+        const choice = req.body.choice
+        const products = await Product.find({choice:choice});
         res.status(200).json(products);
     } catch (error) {
         res.status(500).json(error.message);
