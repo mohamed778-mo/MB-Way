@@ -55,7 +55,9 @@ router.get('/get_all_requests',auth,getAllRequests);
 
 router.get('/get_request/:id',auth,getRequestById);
 
-router.put('/update_supplier/:id',auth,updateSupplier);
+router.put('/update_request/:id',auth,updateRequest);
+
+router.delete('/delete_request/:id',auth,deleteRequest);
 
 
 
