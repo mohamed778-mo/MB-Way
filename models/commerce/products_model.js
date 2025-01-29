@@ -5,6 +5,9 @@ let ProductsSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
+    choice:{
+        type: String,
+    },
     image:{
         type: String,
 
