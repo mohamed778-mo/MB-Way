@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const validator=require('validator')
 
 let ConsultationSchema = new mongoose.Schema({
     customer_name: {
@@ -12,6 +13,12 @@ let ConsultationSchema = new mongoose.Schema({
     email: {
         type: String,
         required: true,
+        trim:true,
+        validate(valu){
+            if(!validator.isEmail(valu)){
+                throw new Error("Invalid email")
+            }
+        }
 
     },
     phone: {
