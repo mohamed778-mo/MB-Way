@@ -50,7 +50,10 @@ const formRouter = require('./routers/form_router');
 const FRpasswordRouter = require('./routers/forgretpassword_router');
 const loginRouter = require('./routers/login_router');
 const engRouter = require('./routers/Eng_router');
+const commerceRouter = require('./routers/commerce_router');
+
 const dashboardRouter = require('./routers/website/dashboard_router');
+
 
 
 app.use('/app/choice', loginRouter);
@@ -61,6 +64,7 @@ app.use('/app/meeting', meetingRouter);
 app.use('/app/form', formRouter);
 app.use('/app/user', FRpasswordRouter);
 app.use('/app/eng', engRouter);
+app.use('/app/commerce', commerceRouter);
 app.use('/app/dashboard', dashboardRouter);
 
 
