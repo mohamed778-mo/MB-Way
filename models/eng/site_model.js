@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-
+const validator=require('validator')
 let SiteEngSchema = new mongoose.Schema({
     company_name: {
         type: String,
@@ -13,6 +13,12 @@ let SiteEngSchema = new mongoose.Schema({
     email: {
         type: String,
         required: true,
+        trim:true,
+        validate(valu){
+            if(!validator.isEmail(valu)){
+                throw new Error("Invalid email")
+            }
+        }
 
     },
     phone: {
