@@ -5,95 +5,48 @@ const Meeting = require("../models/mettings_model");
 require("dotenv").config();
 
 
-const admin_add_metting = async (req, res) => {
+const add_meeting = async (req, res) => {
   try {
-    const user_data = await Admin.findById(req.user._id);
-    if (!user_data) {
-      return res.status(400).json('Admin does not exist!');
-    }
-
-    const {
-      meeting_heading,
-      section,
-      meeting_description,
-      meeting_date,
-      from,
-      to,
-      link,
-      employees_id, 
-    } = req.body;
-
-
-    const employees = await Employee.find({ _id: { $in: employees_id } }).select(
-      'name role photo'
-    );
-
-
-    if (employees.length !== employees_id.length) {
-      return res.status(400).json('Some employees do not exist!');
-    }
-
-
-    const new_meeting = new Meeting({
-      meeting_heading,
-      section,
-      meeting_description,
-      meeting_date,
-      from,
-      to,
-      link,
-      employees: employees.map((emp) => ({
-        employee_id: emp._id,
-        name: emp.name,
-        role: emp.role,
-        photo: emp.photo,
-      })),
-    });
-
-    await new_meeting.save();
-
-    await Employee.updateMany(
-      { _id: { $in: employees_id } },
-      { $push: { meetings: new_meeting._id } }
-    );
-
-    res.status(200).json('Meeting created successfully!');
-  } catch (e) {
-    res.status(500).json(e.message);
-  }
-};
-
-const manager_add_metting = async (req, res) => {
-  try {
-    const user_data = await Employee.findById(req.user._id);
-    if (!user_data || user_data.isBlock) {
-      return res.status(404).json('You are blocked!');
-    }
-    if (!user_data.isManager) {
-      return res.status(400).json('You are not authorized as a manager!');
-    }
-
-    const {
-      meeting_heading,
-      meeting_description,
-      meeting_date,
-      from,
-      to,
-      link,
-      employees_id, 
-    } = req.body;
-
- 
-    const employees = await Employee.find({ _id: { $in: employees_id } }).select(
-      'name role photo'
-    );
+    let user_data;
+    let section = null;
 
   
+    if (req.user.role === 'Admin') {
+      user_data = await Admin.findById(req.user._id);
+      if (!user_data) {
+        return res.status(400).json('Admin does not exist!');
+      }
+    } else {
+      user_data = await Employee.findById(req.user._id);
+      if (!user_data || user_data.isBlock) {
+        return res.status(404).json('You are blocked!');
+      }
+      
+    }
+if (!user_data.isManager) {
+        return res.status(400).json('You are not authorized as a manager!');
+      }
+    const {
+      meeting_heading,
+      meeting_description,
+      meeting_date,
+      section,
+      from,
+      to,
+      link,
+      employees_id,
+    } = req.body;
+
+  
+    const employees = await Employee.find({ _id: { $in: employees_id } }).select(
+      'name role photo'
+    );
+
     if (employees.length !== employees_id.length) {
       return res.status(400).json('Some employees do not exist!');
     }
 
-    const section = user_data.section;
+  
     const new_meeting = new Meeting({
       meeting_heading,
       meeting_description,
@@ -101,7 +54,7 @@ const manager_add_metting = async (req, res) => {
       from,
       to,
       link,
-      section:section,
+      section, 
       employees: employees.map((emp) => ({
         employee_id: emp._id,
         name: emp.name,
@@ -112,7 +65,7 @@ const manager_add_metting = async (req, res) => {
 
     await new_meeting.save();
 
- 
+  
     await Employee.updateMany(
       { _id: { $in: employees_id } },
       { $push: { meetings: new_meeting._id } }
@@ -310,10 +263,7 @@ const update_meeting = async (req, res) => {
 
 
   module.exports = {
-    //admin
-    admin_add_metting,
-    //manager
-    manager_add_metting,
+    add_meeting,
     get_all_meetings,
     get_det_meeting,
     delete_meeting,
