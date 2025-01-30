@@ -7,6 +7,9 @@ var meetingSchema = new mongoose.Schema({
     meeting_description:{
         type:String,
     },
+    section:{
+        type:String,
+    },
     meeting_date:{
         type:Date,
     },
