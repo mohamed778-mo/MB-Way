@@ -27,7 +27,7 @@ const  {
 
 router.post('/create_product',auth,Istorage.any(),createProduct);
 
-router.get('/get_all_products',auth,getAllProducts);
+router.put('/get_all_products',auth,getAllProducts);
 
 router.get('/get_product/:id',auth,getProductById);
 
