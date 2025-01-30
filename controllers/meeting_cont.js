@@ -14,6 +14,7 @@ const admin_add_metting = async (req, res) => {
 
     const {
       meeting_heading,
+      section,
       meeting_description,
       meeting_date,
       from,
@@ -35,6 +36,7 @@ const admin_add_metting = async (req, res) => {
 
     const new_meeting = new Meeting({
       meeting_heading,
+      section,
       meeting_description,
       meeting_date,
       from,
@@ -262,14 +264,14 @@ const update_meeting = async (req, res) => {
         (emp) => !remove_employees.includes(emp.employee_id.toString())
       );
 
-      // Update employee meetings
+   
       await Employee.updateMany(
         { _id: { $in: remove_employees } },
         { $pull: { meetings: meeting._id } }
       );
     }
 
-    // Update meeting details
+  
     if (meeting_date) meeting.meeting_date = meeting_date;
     if (from) meeting.from = from;
     if (to) meeting.to = to;
@@ -277,7 +279,7 @@ const update_meeting = async (req, res) => {
     if (meeting_heading) meeting.meeting_heading = meeting_heading;
     if (meeting_description) meeting.meeting_description = meeting_description;
 
-    // Save updated meeting
+
     await meeting.save();
 
     res.status(200).json('Meeting updated successfully!');
@@ -296,9 +298,8 @@ const update_meeting = async (req, res) => {
   }
 
   const get_metting_in_section= async(req,res) => {
-    try {
-      const manager_data=await Employee.findById(req.user._id);
-      const section = manager_data.section
+    t
+      const section = req.body.section
       const meetings = await Meeting.find({ section: section });
       res.status(200).json(meetings);
     } catch (e) {
