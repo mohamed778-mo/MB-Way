@@ -251,7 +251,7 @@ const update_meeting = async (req, res) => {
   }
 
   const get_metting_in_section= async(req,res) => {
-    t
+    try{
       const section = req.body.section
       const meetings = await Meeting.find({ section: section });
       res.status(200).json(meetings);
