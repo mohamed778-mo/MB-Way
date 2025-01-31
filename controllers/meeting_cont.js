@@ -8,7 +8,7 @@ require("dotenv").config();
 const add_meeting = async (req, res) => {
   try {
     let user_data;
-    let section = null;
+    
 
   
     if (req.user.role === 'Admin') {
