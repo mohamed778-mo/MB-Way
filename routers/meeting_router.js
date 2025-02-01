@@ -16,7 +16,7 @@ const{
     get_employee_det_meeting,}=require("../controllers/meeting_cont")
 
 router.post("/admin/create_meeting",auth,add_meeting)
-router.get("/get_all_meetings",get_all_meetings)
+router.put("/get_all_meetings",get_all_meetings)
 router.get("/get_det_meeting/:meeting_id",get_det_meeting)
 router.get("/get_meeting_in_section",get_metting_in_section)
 router.delete("/delete_meeting/:meeting_id",delete_meeting)
