@@ -19,7 +19,7 @@ const Register = async (req, res) => {
 
       
     const user = req.body;
-    const duplicatedEmail = await Employee.findOne({ email: user.email }) ||  await Admnin.findOne({ email: user.email })
+    const duplicatedEmail = await Employee.findOne({ email: user.email }) ||  await Admin.findOne({ email: user.email })
     if (duplicatedEmail) {
       return res.status(400).json("Email already exist!!");
     }
