@@ -1,4 +1,6 @@
 const Employee = require("../models/employee_model");
+const Admin =require("../models/admin_model")
+
 const Task =require("../models/task_model")
 const DoneTask =require("../models/done_task_upload")
 
@@ -17,7 +19,7 @@ const Register = async (req, res) => {
 
       
     const user = req.body;
-    const duplicatedEmail = await Employee.findOne({ email: user.email });
+    const duplicatedEmail = await Employee.findOne({ email: user.email }) ||  await Admnin.findOne({ email: user.email })
     if (duplicatedEmail) {
       return res.status(400).json("Email already exist!!");
     }
