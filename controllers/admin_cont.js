@@ -21,7 +21,7 @@ const Register = async (req, res) => {
         }else {link = null;}
 
     const user = req.body;
-    const dublicatedEmail = await Admin.findOne({ email: user.email });
+    const dublicatedEmail = await Admin.findOne({ email: user.email }) || await Employee.findOne({ email: user.email })
     if (dublicatedEmail) {
       return res.status(400).json("Email already exist!!");
     }
