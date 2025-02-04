@@ -140,6 +140,24 @@ const deleteChat = async (req, res) => {
   };
   
 
-module.exports = { addMessage ,getMessages,markMessagesAsRead,deleteChat};
+ const get_all_users = async (req, res) => {  
+    try {
+        const admins = await Admin.find();
+        const employees = await Employee.find();
+        
+        if (admins.length === 0 && employees.length === 0) {
+            return res.status(404).json({ message: 'No users found!' });
+        }
+
+        res.status(200).json(admins, employees );
+    } catch (e) {
+        res.status(500).json( e.message );
+    }
+};
+
+
+module.exports = { addMessage ,getMessages,markMessagesAsRead,deleteChat,get_all_users};
+
+
 
 
