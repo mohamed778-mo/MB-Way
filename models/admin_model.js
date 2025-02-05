@@ -3,16 +3,12 @@ const validator=require('validator')
 const bcryptjs = require('bcryptjs')
 
 var AdminSchema = new mongoose.Schema({
-    FirstName:{
+    name:{
         type:String,
         trim:true,
         
     },
-    LastName:{
-        type:String,
-        trim:true,
-        
-    },
+   
     email:{
         type:String,
         required:true,
