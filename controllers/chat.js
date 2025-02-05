@@ -142,8 +142,8 @@ const deleteChat = async (req, res) => {
 
  const get_all_users = async (req, res) => {  
     try {
-        const admins = await Admin.find();
-        const employees = await Employee.find();
+        const admins = await Admin.find().select('_id name role photo');
+        const employees = await Employee.find().select('_id name role photo');
         
         if (admins.length === 0 && employees.length === 0) {
             return res.status(404).json({ message: 'No users found!' });
