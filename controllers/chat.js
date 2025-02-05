@@ -149,9 +149,9 @@ const deleteChat = async (req, res) => {
             return res.status(404).json({ message: 'No users found!' });
         }
 
-        res.status(200).json(admins, employees );
+        res.status(200).json([...admins, ...employees]); 
     } catch (e) {
-        res.status(500).json( e.message );
+        res.status(500).json({ error: e.message });
     }
 };
 
