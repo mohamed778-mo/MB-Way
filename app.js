@@ -1,15 +1,11 @@
 const express = require('express');
 const helmet = require('helmet');
 const cors = require('cors');
-const connection = require('./config/config');
 const cookieParser = require('cookie-parser');
 require('dotenv').config();
 const bodyParser = require('body-parser');
 const path = require('path');
 const http = require('http');
-
-const translateMiddleware = require('./utils/translateMiddleware'); 
-
 const { Server } = require('socket.io');
 
 
@@ -17,33 +13,22 @@ const app = express();
 
 
 app.use(helmet());
-
-
 app.use(cors({
     origin: '*',
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization'],
 }));
-
-
 app.use(bodyParser.json({ limit: '1gb', extended: true }));
 app.use(bodyParser.urlencoded({ limit: '1gb', extended: true }));
-
-
 app.use(cookieParser());
 
 
+const translateMiddleware = require('./utils/translateMiddleware'); 
+app.use(translateMiddleware);
+
+
+const connection = require('./config/config');
 connection();
-
-app.use(translateMiddleware); 
-
-const server = http.createServer(app);
-const io = new Server(server, {
-    cors: {
-        origin: '*',
-        methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-    },
-});
 
 
 const adminRouter = require('./routers/admin_router');
@@ -55,10 +40,7 @@ const FRpasswordRouter = require('./routers/forgretpassword_router');
 const loginRouter = require('./routers/login_router');
 const engRouter = require('./routers/Eng_router');
 const commerceRouter = require('./routers/commerce_router');
-
 const dashboardRouter = require('./routers/website/dashboard_router');
-
-
 
 app.use('/app/choice', loginRouter);
 app.use('/app/chat', chatRouter);
@@ -73,6 +55,17 @@ app.use('/app/dashboard', dashboardRouter);
 
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+
+const server = http.createServer(app);
+
+
+const io = new Server(server, {
+    cors: {
+        origin: '*',
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+    },
+});
 
 
 io.on('connection', (socket) => {
