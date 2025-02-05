@@ -1,17 +1,16 @@
 const { Translate } = require('@google-cloud/translate').v2;
+require('dotenv').config();
 
-const translate = new Translate({
-    key: process.env.GOOGLE_TRANSLATE_API_KEY, 
-});
+const translate = new Translate({ key: process.env.GOOGLE_TRANSLATE_API_KEY });
 
-const translateText = async (text, targetLanguage) => {
+async function translateText(text, targetLanguage) {
     try {
-        let [translations] = await translate.translate(text, targetLanguage);
-        return translations;
+        const [translation] = await translate.translate(text, targetLanguage);
+        return translation;
     } catch (error) {
-        console.error('Translation error:', error);
-        return text; 
+        console.error('Translation Error:', error);
+        return text;
     }
-};
+}
 
 module.exports = translateText;
