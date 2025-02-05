@@ -22,7 +22,7 @@ const addMessage = async (req, res) => {
         const jsonerId =req.params.jsonerId 
         const receiverId =req.params.receiverId 
 
-        if (!jsonerId || !receiverId || (!message && !file)) {
+        if (!jsonerId || !receiverId || !message) {
             return res.status(400).json({ message: 'Content or attachment is required.' });
         }
         let actuallySend; 
