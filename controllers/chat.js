@@ -1,6 +1,7 @@
 const Chat = require('../models/chat');
 const Admin = require('../models/admin_model');
 const Employee = require('../models/employee_model');
+const mongoose = require('mongoose');
 
 
 const addMessage = async (req, res) => {
@@ -59,13 +60,15 @@ const addMessage = async (req, res) => {
 const getMessages = async (req, res) => {
     try {
         const { userIdSender, userIdReceiver } = req.params;
-
+const page = parseInt(req.query.page) || 1;
+       const limit = parseInt(req.query.limit) || 10;
      
         if (!userIdSender || !userIdReceiver) {
             return res.status(400).json({ message: 'Both user IDs are required.' });
         }
 
        
+
         const messages = await Chat.find({
             $or: [
                 { sender: userIdSender, receiver: userIdReceiver },
@@ -111,22 +114,19 @@ const markMessagesAsRead = async (req, res) => {
 
 const deleteChat = async (req, res) => {
     try {
-      const { chatId } = req.params;
-  
-      
-      const chat = await Chat.findById(chatId);
-      if (!chat) {
-        return res.status(404).json('Chat not found!');
-      }
-  
-    
-      await Chat.findByIdAndDelete(chatId);
-  
-      res.status(200).json('Chat deleted successfully.');
+        const { senderId, receiverId } = req.params;
+
+        const chat = await Chat.findOneAndDelete({ sender: senderId, receiver: receiverId });
+
+        if (!chat) {
+            return res.status(404).json({ message: 'Chat not found!' });
+        }
+
+        res.status(200).json({ message: 'Chat deleted successfully.' });
     } catch (error) {
-      res.status(500).json(error.message);
+        res.status(500).json({ message: 'Error deleting chat.', error });
     }
-  };
+};
   
 
  const get_all_users = async (req, res) => {  
