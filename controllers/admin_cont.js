@@ -103,16 +103,18 @@ const get_employee_not_verified = async(req,res) => {
     res.status(500).json(e.message);
   }
 }
+
 const verifyEmployeeEmail = async (req, res) => {
   try {
     const employee_id = req.params.employee_id;
-    
-    const user = await Employee.findById(employee_id);
+
+   
+    const user = await Employee.findByIdAndUpdate(employee_id, { verified: true }, { new: true });
+
     if (!user) {
       return res.status(404).json("User not found!");
     }
-    user.verified = true
-   await user.save();
+
     res.status(200).json("Email is verified!");
   } catch (e) {
     res.status(500).json(e.message);  
@@ -122,18 +124,20 @@ const verifyEmployeeEmail = async (req, res) => {
 const remove_verifyEmployeeEmail = async (req, res) => {
   try {
     const employee_id = req.params.employee_id;
-   const user = await Employee.findById(employee_id);
+
+   
+    const user = await Employee.findByIdAndUpdate(employee_id, { verified: false }, { new: true });
+
     if (!user) {
       return res.status(404).json("User not found!");
     }
-    user.verified = false
-   await user.save();
-    
-    res.status(200).json("Email is Not_verified!");
+
+    res.status(200).json("Email is Not verified!");
   } catch (e) {
     res.status(500).json(e.message);  
   }
 };
+
 
 const getEmployee = async (req, res) => {
   try {
