@@ -1,28 +1,40 @@
-const translateText = require('./googleTranslate'); 
+const translateText = require('./googleTranslate');
 
-const translateMiddleware = async (req, res, next) => {
-    const lang = req.query.lang || 'en'; 
-    if (lang === 'en' || lang === 'tr') {
-        const originalJson = res.json;
-
-        res.json = async function (data) {
-            if (typeof data === 'object') {
-                for (const key in data) {
-                    if (typeof data[key] === 'string') {
-                        data[key] = await translateText(data[key], lang);
-                    } else if (typeof data[key] === 'object' && data[key] !== null) {
-                        for (const subKey in data[key]) {
-                            if (typeof data[key][subKey] === 'string') {
-                                data[key][subKey] = await translateText(data[key][subKey], lang);
-                            }
-                        }
-                    }
-                }
-            }
-            originalJson.call(this, data);
-        };
+async function translateMiddleware(req, res, next) {
+    if (!req.query.lang) {
+        return next(); 
     }
+
+    const lang = req.query.lang; 
+
+    const originalJson = res.json;
+
+    res.json = async function (data) {
+        if (typeof data === 'object') {
+            data = await translateObject(data, lang);
+        }
+        originalJson.call(this, data);
+    };
+
     next();
-};
+}
+
+
+async function translateObject(obj, lang) {
+    if (Array.isArray(obj)) {
+        return Promise.all(obj.map(item => translateObject(item, lang)));
+    } else if (obj !== null && typeof obj === 'object') {
+        const newObj = {};
+        for (const key in obj) {
+            if (typeof obj[key] === 'string') {
+                newObj[key] = await translateText(obj[key], lang);
+            } else {
+                newObj[key] = await translateObject(obj[key], lang);
+            }
+        }
+        return newObj;
+    }
+    return obj;
+}
 
 module.exports = translateMiddleware;
