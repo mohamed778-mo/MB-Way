@@ -25,6 +25,9 @@
   "dependencies": {
   
     
+  "@google-cloud/translate": "^8.5.0",
+  
+    
   "bcryptjs": "^2.4.3",
   
     

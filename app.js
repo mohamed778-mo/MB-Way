@@ -7,6 +7,9 @@ require('dotenv').config();
 const bodyParser = require('body-parser');
 const path = require('path');
 const http = require('http');
+
+const translateMiddleware = require('./utils/translateMiddleware'); 
+
 const { Server } = require('socket.io');
 
 
@@ -32,6 +35,7 @@ app.use(cookieParser());
 
 connection();
 
+app.use(translateMiddleware); 
 
 const server = http.createServer(app);
 const io = new Server(server, {
