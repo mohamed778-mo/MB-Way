@@ -6,64 +6,53 @@ const Employee = require('../models/employee_model');
 const addMessage = async (req, res) => {
     try {
         const file = req.files?.find(f => f.fieldname === 'file');
-         let link ;
-
-         if (file) {
-            link = `http://localhost:3000/uploads/${file.filename}`;
-        }else{
-            link = null;
-        }
-
-       
-
-        const message  = req.body.message
+        let link = file ? `http://localhost:3000/uploads/${file.filename}` : null;
         
+        const message  = req.body.message;
+        const senderId = req.params.senderId;  
+        const receiverId = req.params.receiverId;  
 
-        const jsonerId =req.params.jsonerId 
-        const receiverId =req.params.receiverId 
+        if (!senderId || !receiverId) {
+            return res.status(400).json('Both sender and receiver IDs are required.' );
+        }
 
         if (!message) {
             return res.status(400).json( 'Content or attachment is required.' );
         }
-        let actuallySend; 
-        let actuallyReceived; 
 
-        let data_jsoner = await Admin.findById(jsonerId) || await Employee.findById(jsonerId)
-        let data_received = await Employee.findById(receiverId) || await Admin.findById(receiverId)
+        if (!mongoose.Types.ObjectId.isValid(senderId) || !mongoose.Types.ObjectId.isValid(receiverId)) {
+            return res.status(400).json( 'Invalid sender or receiver ID format.');
+        }
 
-    
-    actuallySend=data_jsoner
-    actuallyReceived=data_received
-        
-   
+        let actuallySend = await Admin.findById(senderId) || await Employee.findById(senderId);
+        let actuallyReceived = await Employee.findById(receiverId) || await Admin.findById(receiverId);
 
-if (!actuallySend || !actuallyReceived) {
-    return res.status(404).json({ message: 'Sender or receiver not found.' });
-}
+        if (!actuallySend || !actuallyReceived) {
+            return res.status(404).json({ message: 'Sender or receiver not found.' });
+        }
 
-        const jsonerType = actuallySend.role
-        const receiverType = actuallyReceived.role
-        
+        const senderModel = actuallySend.role;
+        const receiverType = actuallyReceived.role;
 
-       
         const newMessage = new Chat({
-            jsoner: jsonerId,
+            sender: senderId,
             receiver: receiverId,
-            jsonerModel: jsonerType,
+            senderModel: senderModel,
             receiverModel: receiverType,
             content: message,
-            attachment:link,
+            attachment: link,
         });
 
         await newMessage.save();
 
         res.status(201).json({ message: 'Message sent successfully!', data: newMessage });
-    
+
     } catch (error) {
         console.error(error);
-        res.status(500).json({ message: 'Error jsoning message.', error });
+        res.status(500).json({ message: 'Error sending message.', error });
     }
 };
+
 
 
 
@@ -79,8 +68,8 @@ const getMessages = async (req, res) => {
        
         const messages = await Chat.find({
             $or: [
-                { jsoner: userIdSender, receiver: userIdReceiver },
-                { jsoner: userIdReceiver, receiver: userIdSender },
+                { sender: userIdSender, receiver: userIdReceiver },
+                { sender: userIdReceiver, receiver: userIdSender },
             ],
         }).sort({ timestamp: -1 }).skip((page - 1) * limit).limit(limit); 
 
@@ -93,16 +82,16 @@ const getMessages = async (req, res) => {
 
 const markMessagesAsRead = async (req, res) => {
     try {
-        const { jsonerId, receiverId } = req.params;
+        const { userIdSender, userIdReceiver } = req.params;
 
-        if (!jsonerId || !receiverId) {
+        if (!userIdSender || !userIdReceiver) {
             return res.status(400).json({ message: 'Both user IDs are required.' });
         }
 
         const result = await Chat.updateMany(
             {
-                jsoner: jsonerId,
-                receiver: receiverId,
+                sender: userIdSender,
+                receiver: userIdReceiver,
                 isRead: false,
             },
             {
