@@ -2,6 +2,7 @@ const Product = require('../models/commerce/products_model');
 const Supplier = require('../models/commerce/suppliers_model'); 
 const Request = require('../models/commerce/request_product_model');
 
+const nodemailer = require('nodemailer');
 
 const createProduct = async (req, res) => {
     try {
