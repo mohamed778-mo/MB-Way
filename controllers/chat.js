@@ -98,19 +98,8 @@ const getMessages = async (req, res) => {
       .limit(limit);
 
    
-    const modifiedChats = chats.map(chat => {
-      const isSender = chat.sender.toString() === userIdSender;
 
-      const modifiedContent = chat.content.map(item => item.message); 
-
-      return {
-        ...chat.toObject(),
-        content: modifiedContent, 
-        me: isSender,
-      };
-    });
-
-    res.status(200).json(modifiedChats);
+    res.status(200).json(chats);
   } catch (error) {
     res.status(500).json(error.message);
   }
