@@ -6,7 +6,8 @@ let suppliersSchema = new mongoose.Schema({
         required: true,
     },
     personal_photo:{
-        type: String, //file
+        type: String, //file,
+        default:null
 
     },
     email: {
@@ -36,12 +37,15 @@ let suppliersSchema = new mongoose.Schema({
     },
     certificates: {  //file
         type: String,
+        default:null
     },
     prices_list: {  //file 
         type: String,
+        default:null
     },
     terms_of_dealing: { //file
         type: String,
+        default:null
     },
     details_would_like_to_add: {
         type: String,
