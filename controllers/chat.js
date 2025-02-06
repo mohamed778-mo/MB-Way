@@ -9,7 +9,7 @@ const addMessage = async (req, res) => {
    
     const senderId = req.params.senderId;   
     const receiverId = req.params.receiverId;
-    const message = req.params.message;
+    const message = req.body.message;
 
   
     if (!message) {
