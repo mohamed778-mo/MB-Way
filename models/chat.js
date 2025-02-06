@@ -27,7 +27,8 @@ var chatSchema = new mongoose.Schema({
             type: String
                },
          me: {
-            type: Boolean
+            type: Boolean,
+            default:false
               }
     }],
     attachment: {
