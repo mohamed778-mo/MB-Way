@@ -22,10 +22,14 @@ var chatSchema = new mongoose.Schema({
         required: true,
         enum: ['Employee', 'Admin'], 
     },
-    content: {
-        type: String,
-        maxlength: 1000,
-    },
+    content: [{
+         message: {
+            type: String
+               },
+         me: {
+            type: Boolean
+              }
+    }],
     attachment: {
         type: String,
     },
