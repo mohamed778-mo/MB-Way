@@ -654,32 +654,32 @@ const updateSteps = async (req, res) => {
             });
 
           
-            let emailContent = "<b>تم تحديث مراحل المعدات</b><p>السلام عليكم،</p>";
+           let emailContent = "<b>Equipment stages have been updated</b><p>Hello,</p>";
 
-            updatedForm.steps.forEach(step => {
-                let status = '';
-                if (step.didnot_start) status = "لم تبدأ بعد";
-                if (step.in_progress) status = "قيد التنفيذ";
-                if (step.complete) status = "تم الانتهاء منها";
+updatedForm.steps.forEach(step => {
+    let status = '';
+    if (step.didnot_start) status = "Not started yet";
+    if (step.in_progress) status = "In progress";
+    if (step.complete) status = "Completed";
 
-                emailContent += `<p>المعدة في مرحلة: ${status}</p>`;
-                if (step.step) emailContent += `<p>تفاصيل المرحله: ${step.step}</p>`;
-                if (step.location) emailContent += `<p>الموقع: ${step.location}</p>`;
-                if (step.late_reason) emailContent += `<p>سبب التأخير: ${step.late_reason}</p>`;
-            });
+    emailContent += `<p>Equipment in stage: ${status}</p>`;
+    if (step.step) emailContent += `<p>Stage details: ${step.step}</p>`;
+    if (step.location) emailContent += `<p>Location: ${step.location}</p>`;
+    if (step.late_reason) emailContent += `<p>Reason for delay: ${step.late_reason}</p>`;
+});
 
-          
-            const info = await transporter.sendMail({
-                from: process.env.USER_EMAIL,
-                to: updatedForm.email,
-                subject: "تحديث حالة المعدات",
-                html: emailContent,
-            });
+const info = await transporter.sendMail({
+    from: process.env.USER_EMAIL,
+    to: updatedForm.email,
+    subject: "Equipment Status Update",
+    html: emailContent,
+});
 
-            res.status(200).json("تم تحديث المراحل وإرسال البريد الإلكتروني بنجاح.");
-        } else {
-            res.status(404).json("المعدات غير موجودة");
-        }
+res.status(200).json("Stages updated and email sent successfully.");
+} else {
+res.status(404).json("Equipment not found");
+}
+        
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
