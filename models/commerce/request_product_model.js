@@ -58,12 +58,36 @@ let RequestsSchema = new mongoose.Schema({
         additional_features: { 
             type: String,
         },
+        
+    steps: [{
+      step: {
+        type: String,
+        required: true,
+      },
+      didnot_start: {
+        type: Boolean,
+        default: false,
+      },
+      in_progress: {
+        type: Boolean,
+        default: false,
+      },
+      complete: {
+        type: Boolean,
+        default: false,
+      },
+      location: {
+        type: String,
+      },
+      late_reason: {
+        type: String,
+      },
+      timestamp: {
+        type: Date,
+        default: Date.now,
+      }
     }]
-   
-   
-
-
-
+  }]
 });
 
 module.exports = mongoose.model('Request', RequestsSchema);
