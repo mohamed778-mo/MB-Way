@@ -440,7 +440,117 @@ const deleteRequest = async (req, res) => {
 };
 
 
+const updateStepsForRequest = async (req, res) => {
+    try {
+      const user = req.user;
+      if (!user || !user.isManager) {
+        return res.status(403).json("You are not accessing this page!");
+      }
+  
 
+      const requestId = req.params.requestId;
+      const productId = req.params.productId;
+      const { steps } = req.body; 
+  
+      if (!steps || !Array.isArray(steps) || steps.length === 0) {
+        return res.status(400).json("Tracking steps are required." );
+      }
+  
+    
+      const requestDoc = await Request.findById(requestId);
+      if (!requestDoc) {
+        return res.status(404).json("Request not found");
+      }
+  
+      
+      const product = requestDoc.products.find(p => p.product_id === productId);
+      if (!product) {
+        return res.status(404).json("Product not found in the request");
+      }
+  
+     
+      if (!product.steps) {
+        product.steps = [];
+      }
+      product.steps.push(...steps);
+  
+     
+      await requestDoc.save();
+  
+     
+      const transporter = nodemailer.createTransport({
+        service: process.env.SERVICE,
+        host: "smtp.gmail.com",
+        port: 465,
+        secure: true,
+        auth: {
+          user: process.env.USER_EMAIL,
+          pass: process.env.USER_PASS,
+        },
+      });
+  
+      
+      let emailContent = "<b>Your shipment tracking has been updated</b><p>Dear Customer,</p>";
+      emailContent += `<p>The following tracking steps have been added for product ${product.product_name}:</p>`;
+      
+      product.steps.forEach(step => {
+        let status = '';
+        if (step.didnot_start) status = "Not started yet";
+        if (step.in_progress) status = "In progress";
+        if (step.complete) status = "Completed";
+  
+        emailContent += `<p>Step: ${step.step} - Status: ${status}</p>`;
+        if (step.location) emailContent += `<p>Location: ${step.location}</p>`;
+        if (step.late_reason) emailContent += `<p>Late reason: ${step.late_reason}</p>`;
+      });
+      emailContent += "<p>Thank you for choosing our service.</p>";
+  
+    
+       transporter.sendMail({
+        from: process.env.USER_EMAIL,
+        to: requestDoc.email,
+        subject: "Shipment Tracking Update",
+        html: emailContent,
+      });
+  
+      res.status(200).json("Tracking steps updated and email sent successfully.");
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  };
+
+  const deleteStepsForRequest = async (req, res) => {
+    try {
+      const user = req.user; 
+      if (!user || !user.isAdmin) {
+        return res.status(403).json("You are not authorized to access this page!");
+      }
+  
+      
+      const requestId = req.params.requestId;
+      const productId = req.params.productId;
+  
+   
+      const requestDoc = await Request.findById(requestId);
+      if (!requestDoc) {
+        return res.status(404).json({ message: "Request not found" });
+      }
+  
+     
+      const product = requestDoc.products.find(p => p.product_id === productId);
+      if (!product) {
+        return res.status(404).json({ message: "Product not found in the request" });
+      }
+  
+      
+      product.steps = [];
+      await requestDoc.save();
+  
+      res.status(200).json("Tracking steps deleted successfully");
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  };
 
 module.exports = {
     createProduct,
@@ -460,4 +570,7 @@ module.exports = {
     getRequestById,
     updateRequest,
     deleteRequest,
+
+     updateStepsForRequest,
+    deleteStepsForRequest
 };
