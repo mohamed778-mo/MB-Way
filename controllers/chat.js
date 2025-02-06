@@ -10,11 +10,9 @@ const addMessage = async (req, res) => {
     const receiverId = req.params.receiverId;
     const message = req.body.message;
 
- 
     if (!message) {
       return res.status(400).json({ message: 'Content or attachment is required.' });
     }
-
 
     const sender = await Admin.findById(senderId) || await Employee.findById(senderId);
     const receiver = await Admin.findById(receiverId) || await Employee.findById(receiverId);
@@ -23,10 +21,8 @@ const addMessage = async (req, res) => {
       return res.status(404).json({ message: 'Sender or receiver not found.' });
     }
 
-  
     const senderModel = sender.role;
     const receiverModel = receiver.role;
-
 
     const file = req.files?.find(f => f.fieldname === 'file');
     let link = file ? `http://localhost:3000/uploads/${file.filename}` : null;
@@ -36,7 +32,6 @@ const addMessage = async (req, res) => {
       me: true
     };
 
-  
     let chat = await Chat.findOne({
       $or: [
         { sender: senderId, receiver: receiverId },
@@ -45,7 +40,6 @@ const addMessage = async (req, res) => {
     });
 
     if (!chat) {
-
       chat = new Chat({
         sender: senderId,
         receiver: receiverId,
@@ -55,26 +49,26 @@ const addMessage = async (req, res) => {
         attachment: link || undefined,
       });
     } else {
+   
+      if (!Array.isArray(chat.content)) {
+        chat.content = [];  
+      }
 
       if (link) {
         chat.attachment = link; 
       }
+
       chat.content.push(messageObject); 
     }
 
-    
     await chat.save();
 
- 
     res.status(201).json({ message: 'Message sent successfully!', data: chat });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Error sending message.', error });
   }
 };
-
-
-
 
 
 const getMessages = async (req, res) => {
