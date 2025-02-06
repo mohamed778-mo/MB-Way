@@ -34,7 +34,7 @@ const addMessage = async (req, res) => {
 
     
     const messageObject = {
-      message: req.body.message || "",
+      message: message || "",
       me: true
     };
 
@@ -53,9 +53,10 @@ const addMessage = async (req, res) => {
         receiver: receiverId,
         senderModel: senderModel,
         receiverModel: receiverModel,
-        content: [messageObject],
         attachment: link || undefined, 
       });
+      await chat.save()
+      chat.content.push(messageObject)
     } else {
    
       if (link) {
