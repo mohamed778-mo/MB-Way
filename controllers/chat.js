@@ -97,13 +97,11 @@ const getMessages = async (req, res) => {
       .skip((page - 1) * limit)
       .limit(limit);
 
-  
+   
     const modifiedChats = chats.map(chat => {
       const isSender = chat.sender.toString() === userIdSender;
 
-      const modifiedContent = chat.content
-        .map(message => message[Object.keys(message)[0]]) 
-        .join(""); 
+      const modifiedContent = chat.content.map(item => item.message); 
 
       return {
         ...chat.toObject(),
