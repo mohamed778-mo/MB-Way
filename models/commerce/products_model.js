@@ -7,6 +7,7 @@ let ProductsSchema = new mongoose.Schema({
     },
     choice:{
         type: String,
+        enum:[ 'our' ,'clients' ]
     },
     image:{
         type: String,
