@@ -23,6 +23,9 @@ const  {
     updateRequest,
     deleteRequest,
 
+    updateStepsForRequest,
+    deleteStepsForRequest
+
 } = require("../controllers/form_commerce_cont");
 
 router.post('/create_product',auth,Istorage.any(),createProduct);
@@ -59,7 +62,10 @@ router.put('/update_request/:id',auth,updateRequest);
 
 router.delete('/delete_request/:id',auth,deleteRequest);
 
+router.put('/update/tracking/:requestId/:productId', updateStepsForRequest);
 
+
+router.delete('/delete/tracking/:requestId/:productId', deleteStepsForRequest);
 
 
 module.exports = router
