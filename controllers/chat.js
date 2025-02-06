@@ -5,83 +5,123 @@ const mongoose = require('mongoose');
 
 
 const addMessage = async (req, res) => {
-    try {
-        const file = req.files?.find(f => f.fieldname === 'file');
-        let link = file ? `http://localhost:3000/uploads/${file.filename}` : null;
-        
-        const message  = req.body.message;
-        const senderId = req.params.senderId;  
-        const receiverId = req.params.receiverId;  
+  try {
+   
+    const senderId = req.params.senderId;   
+    const receiverId = req.params.receiverId;
+    const message = req.params.message;
 
-        if (!senderId || !receiverId) {
-            return res.status(400).json('Both sender and receiver IDs are required.' );
-        }
-
-        if (!message) {
-            return res.status(400).json( 'Content or attachment is required.' );
-        }
-
-        if (!mongoose.Types.ObjectId.isValid(senderId) || !mongoose.Types.ObjectId.isValid(receiverId)) {
-            return res.status(400).json( 'Invalid sender or receiver ID format.');
-        }
-
-        let actuallySend = await Admin.findById(senderId) || await Employee.findById(senderId);
-        let actuallyReceived = await Employee.findById(receiverId) || await Admin.findById(receiverId);
-
-        if (!actuallySend || !actuallyReceived) {
-            return res.status(404).json({ message: 'Sender or receiver not found.' });
-        }
-
-        const senderModel = actuallySend.role;
-        const receiverType = actuallyReceived.role;
-
-        const newMessage = new Chat({
-            sender: senderId,
-            receiver: receiverId,
-            senderModel: senderModel,
-            receiverModel: receiverType,
-            content: message,
-            attachment: link,
-        });
-
-        await newMessage.save();
-
-        res.status(201).json({ message: 'Message sent successfully!', data: newMessage });
-
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Error sending message.', error });
+  
+    if (!message) {
+      return res.status(400).json( 'Content or attachment is required.' );
     }
+
+    
+    const sender = await Admin.findById(senderId) || await Employee.findById(senderId);
+    const receiver = await Admin.findById(receiverId) || await Employee.findById(receiverId);
+
+    if (!sender || !receiver) {
+      return res.status(404).json('Sender or receiver not found.' );
+    }
+
+  
+    const senderModel = sender.role;
+    const receiverModel = receiver.role;
+
+
+    const file = req.files?.find(f => f.fieldname === 'file');
+    let link = file ? `http://localhost:3000/uploads/${file.filename}` : null;
+
+    
+    const messageObject = {
+      message: req.body.message || "",
+      me: true
+    };
+
+
+    let chat = await Chat.findOne({
+      $or: [
+        { sender: senderId, receiver: receiverId },
+        { sender: receiverId, receiver: senderId }
+      ]
+    });
+
+ 
+    if (!chat) {
+      chat = new Chat({
+        sender: senderId,
+        receiver: receiverId,
+        senderModel: senderModel,
+        receiverModel: receiverModel,
+        content: [messageObject],
+        attachment: link || undefined, 
+      });
+    } else {
+   
+      if (link) {
+        chat.attachment = link; 
+      }
+      chat.content.push(messageObject);
+    }
+
+  
+    await chat.save();
+
+    res.status(201).json({ message:'Message sent successfully!', data: chat });
+    
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error sending message.', error });
+  }
 };
+
 
 
 
 
 const getMessages = async (req, res) => {
-    try {
-        const { userIdSender, userIdReceiver } = req.params;
-const page = parseInt(req.query.page) || 1;
-       const limit = parseInt(req.query.limit) || 10;
-     
-        if (!userIdSender || !userIdReceiver) {
-            return res.status(400).json({ message: 'Both user IDs are required.' });
-        }
+  try {
+    const { userIdSender, userIdReceiver } = req.params;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
 
-       
-
-        const messages = await Chat.find({
-            $or: [
-                { sender: userIdSender, receiver: userIdReceiver },
-                { sender: userIdReceiver, receiver: userIdSender },
-            ],
-        }).sort({ timestamp: -1 }).skip((page - 1) * limit).limit(limit); 
-
-        res.status(200).json({ messages });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Error retrieving messages.', error });
+    if (!userIdSender || !userIdReceiver) {
+      return res.status(400).json('Both user IDs are required.' );
     }
+
+   
+    const chats = await Chat.find({
+      $or: [
+        { sender: userIdSender, receiver: userIdReceiver },
+        { sender: userIdReceiver, receiver: userIdSender },
+      ],
+    })
+      .sort({ timestamp: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit);
+
+  
+    const modifiedChats = chats.map(chat => {
+    
+      const isSender = chat.sender.toString() === userIdSender;
+      
+      const modifiedContent = chat.content.map(message => ({
+        ...message.toObject(), 
+        me: isSender, 
+      }));
+
+      return {
+        ...chat.toObject(),
+        content: modifiedContent,
+      };
+    });
+
+    res.status(200).json( modifiedChats );
+  } catch (error) {
+    res.status(500).json( error.message );
+  }
 };
+
 
 const markMessagesAsRead = async (req, res) => {
     try {
