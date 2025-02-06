@@ -6,22 +6,21 @@ const mongoose = require('mongoose');
 
 const addMessage = async (req, res) => {
   try {
-   
-    const senderId = req.params.senderId;   
+    const senderId = req.params.senderId;
     const receiverId = req.params.receiverId;
     const message = req.body.message;
 
-  
+ 
     if (!message) {
-      return res.status(400).json( 'Content or attachment is required.' );
+      return res.status(400).json({ message: 'Content or attachment is required.' });
     }
 
-    
+
     const sender = await Admin.findById(senderId) || await Employee.findById(senderId);
     const receiver = await Admin.findById(receiverId) || await Employee.findById(receiverId);
 
     if (!sender || !receiver) {
-      return res.status(404).json('Sender or receiver not found.' );
+      return res.status(404).json({ message: 'Sender or receiver not found.' });
     }
 
   
@@ -32,13 +31,12 @@ const addMessage = async (req, res) => {
     const file = req.files?.find(f => f.fieldname === 'file');
     let link = file ? `http://localhost:3000/uploads/${file.filename}` : null;
 
-    
     const messageObject = {
-      message: message || "",
+      message: message, 
       me: true
     };
 
-
+  
     let chat = await Chat.findOne({
       $or: [
         { sender: senderId, receiver: receiverId },
@@ -46,30 +44,29 @@ const addMessage = async (req, res) => {
       ]
     });
 
- 
     if (!chat) {
+
       chat = new Chat({
         sender: senderId,
         receiver: receiverId,
         senderModel: senderModel,
         receiverModel: receiverModel,
-        attachment: link || undefined, 
+        content: [messageObject], 
+        attachment: link || undefined,
       });
-      await chat.save()
-      chat.content.push(messageObject)
     } else {
-   
+
       if (link) {
         chat.attachment = link; 
       }
-      chat.content.push(messageObject);
+      chat.content.push(messageObject); 
     }
 
-  
+    
     await chat.save();
 
-    res.status(201).json({ message:'Message sent successfully!', data: chat });
-    
+ 
+    res.status(201).json({ message: 'Message sent successfully!', data: chat });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Error sending message.', error });
@@ -87,10 +84,9 @@ const getMessages = async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
 
     if (!userIdSender || !userIdReceiver) {
-      return res.status(400).json('Both user IDs are required.' );
+      return res.status(400).json('Both user IDs are required.');
     }
 
-   
     const chats = await Chat.find({
       $or: [
         { sender: userIdSender, receiver: userIdReceiver },
@@ -103,25 +99,25 @@ const getMessages = async (req, res) => {
 
   
     const modifiedChats = chats.map(chat => {
-    
       const isSender = chat.sender.toString() === userIdSender;
-      
-      const modifiedContent = chat.content.map(message => ({
-        ...message.toObject(), 
-        me: isSender, 
-      }));
+
+      const modifiedContent = chat.content
+        .map(message => message[Object.keys(message)[0]]) 
+        .join(""); 
 
       return {
         ...chat.toObject(),
-        content: modifiedContent,
+        content: modifiedContent, 
+        me: isSender,
       };
     });
 
-    res.status(200).json( modifiedChats );
+    res.status(200).json(modifiedChats);
   } catch (error) {
-    res.status(500).json( error.message );
+    res.status(500).json(error.message);
   }
 };
+
 
 
 const markMessagesAsRead = async (req, res) => {
