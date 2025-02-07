@@ -37,6 +37,9 @@ available_size: {
     additional_features: { 
         type: String,
     },
+    brand:{
+        type: String,
+    }
    
 
 
