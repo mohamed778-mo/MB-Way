@@ -83,9 +83,9 @@ const getProfile = async (req, res) => {
 
     let user;
     if (role === "Admin") {
-      user = await Admin.findById(userId).select("-password -tokens"); 
+      user = await Admin.findById(userId).select("-password -tokens -passwordResetToken"); 
     } else if (role === "Employee") {
-      user = await Employee.findById(userId).select("-password -tokens");
+      user = await Employee.findById(userId).select("-password -tokens -passwordResetToken");
     } else {
       return res.status(400).json("Invalid role");
     }
