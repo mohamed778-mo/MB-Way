@@ -20,7 +20,8 @@ const createProduct = async (req, res) => {
             available_size,
             barcode,
             warranty,
-            additional_features
+            additional_features,
+            brand
         } = req.body;
 
         const productImageFile = req.files?.find(f => f.fieldname === 'image'); 
@@ -35,7 +36,8 @@ const createProduct = async (req, res) => {
             available_size: Array.isArray(available_size) ? available_size : [],
             barcode,
             warranty,
-            additional_features
+            additional_features,
+            brand
         });
 
         await newProduct.save();
@@ -318,6 +320,7 @@ const createRequest = async (req, res) => {
                 barcode: product.barcode,
                 warranty: product.warranty,
                 additional_features: product.additional_features,
+                brand:product.brand,
             })),
         });
 
@@ -401,6 +404,7 @@ const updateRequest = async (req, res) => {
                 barcode: product.barcode,
                 warranty: product.warranty,
                 additional_features: product.additional_features,
+                brand:product.brand,
             }));
         }
 
