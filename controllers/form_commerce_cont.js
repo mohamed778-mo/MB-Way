@@ -13,7 +13,6 @@ const createProduct = async (req, res) => {
 
         const {
             product_name,
-            choice,
             quantity,
             price,
             products_type,
@@ -28,7 +27,6 @@ const createProduct = async (req, res) => {
 
         const newProduct = new Product({
             product_name,
-            choice,
             image: productImageFile ? `http://localhost:3000/uploads/${productImageFile.filename}` : null, 
             quantity,
             price,
