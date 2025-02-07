@@ -75,4 +75,31 @@ const Login = async (req, res) => {
   }
 };
 
-module.exports = { Login };
+
+const getProfile = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const role = req.user.role; 
+
+    let user;
+    if (role === "Admin") {
+      user = await Admin.findById(userId).select("-password -tokens"); 
+    } else if (role === "Employee") {
+      user = await Employee.findById(userId).select("-password -tokens");
+    } else {
+      return res.status(400).json("Invalid role");
+    }
+
+    if (!user) {
+      return res.status(404).json("User not found");
+    }
+
+    res.status(200).json({ user });
+  } catch (error) {
+    res.status(500).json(error.message);
+  }
+};
+
+
+
+module.exports = { Login , getProfile};
