@@ -7,7 +7,7 @@ const {auth}=require("../middleware/auth")
 
 router.post("/add_message/:senderId/:receiverId",auth,Istorage.any(),addMessage)
  
-router.get("/get_messages/:userIdReceiver/:userIdSender",auth,getMessages)
+router.get("/get_messages/:userIdSender/:userIdReceiver",auth,getMessages)
 
 router.delete("/delete_chat/:senderId/:receiverId",auth, deleteChat)
 
