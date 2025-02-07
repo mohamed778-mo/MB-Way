@@ -29,7 +29,8 @@ const addMessage = async (req, res) => {
 
     const messageObject = {
       message: message, 
-      me: true
+      sender: senderId, 
+      me: true 
     };
 
     let chat = await Chat.findOne({
@@ -49,7 +50,6 @@ const addMessage = async (req, res) => {
         attachment: link || undefined,
       });
     } else {
-   
       if (!Array.isArray(chat.content)) {
         chat.content = [];  
       }
@@ -69,7 +69,6 @@ const addMessage = async (req, res) => {
     res.status(500).json({ message: 'Error sending message.', error });
   }
 };
-
 
 const getMessages = async (req, res) => {
   try {
@@ -91,13 +90,20 @@ const getMessages = async (req, res) => {
       .skip((page - 1) * limit)
       .limit(limit);
 
-   
+    const formattedChats = chats.map(chat => {
+      chat.content = chat.content.map(msg => ({
+        ...msg,
+        me: msg.sender === userIdSender
+      }));
+      return chat;
+    });
 
-    res.status(200).json(chats);
+    res.status(200).json(formattedChats);
   } catch (error) {
     res.status(500).json(error.message);
   }
 };
+
 
 
 
