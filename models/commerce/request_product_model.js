@@ -26,7 +26,7 @@ let RequestsSchema = new mongoose.Schema({
         },
            product_name: {
         type: String,
-        required: true,
+     
     },
     image:{
         type: String,
