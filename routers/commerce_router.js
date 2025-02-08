@@ -62,10 +62,10 @@ router.put('/update_request/:id',auth,updateRequest);
 
 router.delete('/delete_request/:id',auth,deleteRequest);
 
-router.put('/update/tracking/:requestId/:productId', updateStepsForRequest);
+router.put('/update/tracking/:requestId/:productId',auth, updateStepsForRequest);
 
 
-router.delete('/delete/tracking/:requestId/:productId', deleteStepsForRequest);
+router.delete('/delete/tracking/:requestId/:productId',auth, deleteStepsForRequest);
 
 
 module.exports = router
