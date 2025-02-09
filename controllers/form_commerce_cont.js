@@ -445,77 +445,79 @@ const deleteRequest = async (req, res) => {
 
 const updateStepsForRequest = async (req, res) => {
     try {
-      const user = req.user;
-      if (!user || !user.isManager) {
-        return res.status(403).json("You are not accessing this page!");
-      }
-  
+        const user = req.user;
+        if (!user || !user.isManager) {
+            return res.status(403).json("You do not have access to this page!");
+        }
 
-      const requestId = req.params.requestId;
-     
-      const { steps } = req.body; 
-  
-      if (!steps || !Array.isArray(steps) || steps.length === 0) {
-        return res.status(400).json("Tracking steps are required." );
-      }
-  
-    
-      const requestDoc = await Request.findById(requestId);
-      if (!requestDoc) {
-        return res.status(404).json("Request not found");
-      }
-  
-      
-     const updatedForm = await Request.findByIdAndUpdate(requestId, { $push: { steps: { $each: steps } } }, { new: true });
+        const requestId = req.params.requestId;
+        const { steps } = req.body;
 
-     
-      if(updatedForm){
-  
-     
-      const transporter = nodemailer.createTransport({
-        service: process.env.SERVICE,
-        host: "smtp.gmail.com",
-        port: 465,
-        secure: true,
-        auth: {
-          user: process.env.USER_EMAIL,
-          pass: process.env.USER_PASS,
-        },
-      });
-  
-      
-      let emailContent = "<b>Your shipment tracking has been updated</b><p>Dear Customer,</p>";
-      emailContent += `<p>The following tracking steps have been added for product ${product.product_name}:</p>`;
-      
-      updatedForm.steps.forEach(step => {
-        let status = '';
-        if (step.didnot_start) status = "Not started yet";
-        if (step.in_progress) status = "In progress";
-        if (step.complete) status = "Completed";
-  
-        emailContent += `<p>Step: ${step.step} - Status: ${status}</p>`;
-        if (step.location) emailContent += `<p>Location: ${step.location}</p>`;
-        if (step.late_reason) emailContent += `<p>Late reason: ${step.late_reason}</p>`;
-      });
-      emailContent += "<p>Thank you for choosing our service.</p>";
-  
-    
-       transporter.sendMail({
-        from: process.env.USER_EMAIL,
-        to: requestDoc.email,
-        subject: "Shipment Tracking Update",
-        html: emailContent,
-      });
+        if (!steps || !Array.isArray(steps) || steps.length === 0) {
+            return res.status(400).json("Tracking steps are required.");
+        }
 
-      res.status(200).json("Tracking steps updated and email sent successfully.");
-      
-      }else{
-            res.status(404).json("request not found!!");
-      }
+       
+        const requestDoc = await Request.findById(requestId).populate("products.product_id"); 
+        if (!requestDoc) {
+            return res.status(404).json("Request not found.");
+        }
+
+
+        const updatedForm = await Request.findByIdAndUpdate(requestId, { 
+            $push: { steps: { $each: steps } } 
+        }, { new: true }).populate("products.product_id"); 
+
+        if (updatedForm) {
+            const transporter = nodemailer.createTransport({
+                service: process.env.SERVICE,
+                host: "smtp.gmail.com",
+                port: 465,
+                secure: true,
+                auth: {
+                    user: process.env.USER_EMAIL,
+                    pass: process.env.USER_PASS,
+                },
+            });
+
+            
+            let emailContent = "<b>Your shipment tracking has been updated</b><p>Dear Customer,</p>";
+            
+            updatedForm.products.forEach(product => {
+                emailContent += `<p><strong>Product Name:</strong> ${product.product_id.product_name}</p>`;
+                emailContent += `<p><strong>Barcode:</strong> ${product.product_id.barcode}</p>`;
+                
+                steps.forEach(step => {
+                    let status = step.didnot_start ? "Not started yet" :
+                                 step.in_progress ? "In progress" :
+                                 step.complete ? "Completed" : "Unknown";
+
+                    emailContent += `<p>📍 <strong>Step:</strong> ${step.step} - <strong>Status:</strong> ${status}</p>`;
+                    if (step.location) emailContent += `<p>📌 <strong>Location:</strong> ${step.location}</p>`;
+                    if (step.late_reason) emailContent += `<p>⏳ <strong>Late reason:</strong> ${step.late_reason}</p>`;
+                });
+
+                emailContent += `<hr/>`; 
+            });
+
+            emailContent += "<p>Thank you for choosing our service.</p>";
+
+            await transporter.sendMail({
+                from: process.env.USER_EMAIL,
+                to: requestDoc.email,
+                subject: "Shipment Tracking Update",
+                html: emailContent,
+            });
+
+            res.status(200).json("Tracking steps updated and email sent successfully.");
+        } else {
+            res.status(404).json("Request not found.");
+        }
     } catch (error) {
-      res.status(500).json({ message: error.message });
+        res.status(500).json({ message: error.message });
     }
-  };
+};
+
 
   const deleteStepsForRequest = async (req, res) => {
     try {
