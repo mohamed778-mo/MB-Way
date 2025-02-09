@@ -64,7 +64,8 @@ available_size: {
         type: String,
     },
         
-    steps: [{
+  }],
+     steps: [{
       step: {
         type: String,
         required: true,
@@ -92,7 +93,6 @@ available_size: {
         default: Date.now,
       }
     }]
-  }]
 });
 
 module.exports = mongoose.model('Request', RequestsSchema);
