@@ -100,6 +100,41 @@ const getProfile = async (req, res) => {
   }
 };
 
+const remove_my_account = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const role = req.user.role;
+    const password = req.body.password;
+
+    let userModel;
+    if (role === "Admin") {
+      userModel = Admin;
+    } else if (role === "Employee") {
+      userModel = Employee;
+    } else {
+      return res.status(400).json("Invalid role");
+    }
 
 
-module.exports = { Login , getProfile};
+    const user = await userModel.findById(userId);
+    if (!user) {
+      return res.status(404).json("User not found");
+    }
+
+  
+    const isPasswordCorrect = await bcryptjs.compare(password, user.password);
+    if (!isPasswordCorrect) {
+      return res.status(400).json("Password not correct!");
+    }
+
+ 
+    await userModel.findByIdAndDelete(userId);
+
+    res.status(200).json({ message: "Account deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+
+module.exports = { Login , getProfile , remove_my_account};
