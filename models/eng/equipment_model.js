@@ -15,7 +15,9 @@ let EquipmentSchema = new mongoose.Schema({
         type: String,
     },
     serial_number: {
-        type: String,
+       type: String,
+        unique: true,
+        required: true
     },
     brand: {
         type: String,
