@@ -452,7 +452,7 @@ const updateStepsForRequest = async (req, res) => {
   
 
       const requestId = req.params.requestId;
-      const productId = req.params.productId;
+     
       const { steps } = req.body; 
   
       if (!steps || !Array.isArray(steps) || steps.length === 0) {
@@ -466,19 +466,10 @@ const updateStepsForRequest = async (req, res) => {
       }
   
       
-      const product = requestDoc.products.find(p => p.product_id === productId);
-      if (!product) {
-        return res.status(404).json("Product not found in the request");
-      }
-  
+     const updatedForm = await Request.findByIdAndUpdate(requestId, { $push: { steps: { $each: steps } } }, { new: true });
+
      
-      if (!product.steps) {
-        product.steps = [];
-      }
-      product.steps.push(...steps);
-  
-     
-      await requestDoc.save();
+      if(updatedForm){
   
      
       const transporter = nodemailer.createTransport({
@@ -496,7 +487,7 @@ const updateStepsForRequest = async (req, res) => {
       let emailContent = "<b>Your shipment tracking has been updated</b><p>Dear Customer,</p>";
       emailContent += `<p>The following tracking steps have been added for product ${product.product_name}:</p>`;
       
-      product.steps.forEach(step => {
+      updatedForm.steps.forEach(step => {
         let status = '';
         if (step.didnot_start) status = "Not started yet";
         if (step.in_progress) status = "In progress";
@@ -515,8 +506,12 @@ const updateStepsForRequest = async (req, res) => {
         subject: "Shipment Tracking Update",
         html: emailContent,
       });
-  
+
       res.status(200).json("Tracking steps updated and email sent successfully.");
+      
+      }else{
+            res.status(404).json("request not found!!");
+      }
     } catch (error) {
       res.status(500).json({ message: error.message });
     }
@@ -531,7 +526,7 @@ const updateStepsForRequest = async (req, res) => {
   
       
       const requestId = req.params.requestId;
-      const productId = req.params.productId;
+  
   
    
       const requestDoc = await Request.findById(requestId);
@@ -540,16 +535,15 @@ const updateStepsForRequest = async (req, res) => {
       }
   
      
-      const product = requestDoc.products.find(p => p.product_id === productId);
-      if (!product) {
-        return res.status(404).json({ message: "Product not found in the request" });
-      }
-  
-      
-      product.steps = [];
+       const result = await Request.updateOne(
+            { "_id": requestId }, 
+            { $set: { steps: [] } }
+        );
+        
       await requestDoc.save();
   
       res.status(200).json("Tracking steps deleted successfully");
+        
     } catch (error) {
       res.status(500).json({ message: error.message });
     }
