@@ -22,7 +22,6 @@ const {
   verifyEmployeeEmail,
   remove_verifyEmployeeEmail,
   get_employees_ref_section,
-  edit_employee_data,
   get_det_notdone_task,
   update_task,
   delete_all_done_taskings,
@@ -53,7 +52,7 @@ router.patch('/verify_email/:employee_id', auth,verifyEmployeeEmail); //admin
 router.patch('/remove_verify_email/:employee_id',auth, remove_verifyEmployeeEmail);//admin 
 router.get('/get_employees_not_verified',auth, get_employee_not_verified);//admin 
 router.get('/get_all_employee', auth, getAllEmployee);//admin 
-router.put('/edit_admin_data', auth, Istorage.any(), editAdminData); //admin personal data
+
 
 
 router.get('/get_employee/:employee_id', auth, getEmployee);//admin manager
