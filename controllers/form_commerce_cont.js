@@ -35,8 +35,8 @@ const createProduct = async (req, res) => {
             quantity,
             price,
             products_type,
-            available_colors: Array.isArray(available_colors) ? available_colors : available_colors.split(","),
-            available_size: Array.isArray(available_size) ? available_size : available_size.split(","),
+            available_colors: available_colors || [], 
+            available_size: available_size || [],
             barcode,
             warranty,
             additional_features,
@@ -95,25 +95,20 @@ const updateProduct = async (req, res) => {
         const { id } = req.params;
         const updatedData = req.body;
 
-     
+
         const productImageFile = req.files?.find(f => f.fieldname === 'image');
         if (productImageFile) {
             updatedData.image = `http://localhost:3000/uploads/${productImageFile.filename}`;
         }
 
-      
-        if (updatedData.available_colors) {
-            updatedData.available_colors = Array.isArray(updatedData.available_colors)
-                ? updatedData.available_colors
-                : updatedData.available_colors.split(",");
+   
+        if (updatedData.available_colors && !Array.isArray(updatedData.available_colors)) {
+            updatedData.available_colors = [updatedData.available_colors];
         }
-        if (updatedData.available_size) {
-            updatedData.available_size = Array.isArray(updatedData.available_size)
-                ? updatedData.available_size
-                : updatedData.available_size.split(",");
+        if (updatedData.available_size && !Array.isArray(updatedData.available_size)) {
+            updatedData.available_size = [updatedData.available_size]; 
         }
 
-   
         const product = await Product.findByIdAndUpdate(id, updatedData, { new: true });
 
         if (!product) {
@@ -125,6 +120,7 @@ const updateProduct = async (req, res) => {
         res.status(500).json(error.message);
     }
 };
+
 
 const deleteProduct = async (req, res) => {
     try {
