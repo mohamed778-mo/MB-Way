@@ -484,8 +484,8 @@ const updateStepsForRequest = async (req, res) => {
             let emailContent = "<b>Your shipment tracking has been updated</b><p>Dear Customer,</p>";
             
             updatedForm.products.forEach(product => {
-                emailContent += `<p><strong>Product Name:</strong> ${product.product_id.product_name}</p>`;
-                emailContent += `<p><strong>Barcode:</strong> ${product.product_id.barcode}</p>`;
+                emailContent += `<p><strong>Product Name:</strong> ${product.product_name}</p>`;
+                emailContent += `<p><strong>Barcode:</strong> ${product.barcode}</p>`;
                 
                 steps.forEach(step => {
                     let status = step.didnot_start ? "Not started yet" :
