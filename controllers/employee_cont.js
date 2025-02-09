@@ -35,43 +35,6 @@ const Register = async (req, res) => {
 
 
 
-const editEmployeeData = async (req, res) => {
-  try {
-    const id = req.user._id;
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(404).json("ID is not correct!!");
-    }
-    const data=await Employee.findById(id)
-    if (!data) {
-      return res.status(404).json("User not found!");
-    }
-    const check_block =data.isBlock;
-    if (check_block) {
-      return res.status(404).json("you are BLOCKED !!");
-    }
-    const file = req.files?.find(f => f.fieldname === 'file');
-        
-       
-         if (file) {
-          const link = `http://localhost:3000/uploads/${file.filename}`;
-          
-           await Employee.findByIdAndUpdate(id,{...req.body,photo:link, new: true })
-          await data.save();
-
-          return res.status(200).json("Data updated successfully!");
-
-      }
-
-  
-    await Employee.findByIdAndUpdate(id,{...req.body, new: true })
-
-    return res.status(200).json("Data updated successfully!");
-
-  } catch (e) {
-    res.status(500).json(e.message);
-  }
-};
-
 
 const get_employee_tasks = async (req, res) => {
   try {
@@ -206,7 +169,6 @@ const attach_employee_task = async (req, res) => {
 
 module.exports = {
     Register,
-    editEmployeeData,
     get_employee_tasks,
     get_employee_det_task,
     attach_employee_task,
