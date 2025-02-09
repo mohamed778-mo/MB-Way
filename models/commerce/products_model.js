@@ -30,6 +30,8 @@ available_size: {
 
     barcode: {
         type: String,
+        unique: true,
+        required: true
     },
     warranty: {
         type: String,
