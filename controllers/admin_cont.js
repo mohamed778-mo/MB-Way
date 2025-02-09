@@ -164,45 +164,7 @@ const getAllEmployee = async (req, res) => {
   }
 };
 
-const editAdminData = async (req, res) => {
-  try {
 
-  
-  
-  const user_data=  await Admin.findById(req.user._id);
-if(!user_data){
-
-  return res.status(400).json('not Exist!');
- 
-}
-    if (!user_data.isAdmin) {
-      return res.status(400).json('not Available!');
-    }
-
-
-    const file = req.files?.find(f => f.fieldname === 'file');
-         let link ;
-       
-         if (file) {
-            link = `http://localhost:3000/uploads/${file.filename}`;
-            
-             await Admin.findByIdAndUpdate(id,{...req.body,photo:link, new: true })
-            await data.save();
-
-            return res.status(200).json("Data updated successfully!");
-
-        }
-
-  
-
-        await Admin.findByIdAndUpdate(id,{...req.body,new: true })
-        await data.save();
-    res.status(200).json("Data updated successfully!");
-  } catch (e) {
-    res.status(500).json(e.message);
-  }
-};
-// admin edit his profile
 
 
 const get_all_done_tasks = async (req, res) => {
@@ -739,7 +701,6 @@ module.exports = {
   done_tasks_in_section,
   getEmployee,
   getAllEmployee,
-  editAdminData,
   get_tasks_nearly_not_done,
   get_all_done_tasks,
   get_det_done_task,
