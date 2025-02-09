@@ -111,22 +111,35 @@ const updateProduct = async (req, res) => {
 const deleteProduct = async (req, res) => {
     try {
         const user = req.user;
+
+      
         if (!user || !user.isManager) {
-            return res.status(403).json("You are not accessing this page!");
+            return res.status(403).json("You are not authorized to perform this action!");
         }
+
         const { id } = req.params;
 
-        const product = await Product.findByIdAndDelete(id);
-
+     
+        const product = await Product.findById(id);
         if (!product) {
             return res.status(404).json("Product not found");
         }
 
-        res.status(200).json("Product deleted successfully");
+     
+        await Product.findByIdAndDelete(id);
+
+       
+        await Request.updateMany(
+            { "products.product_id": id },
+            { $pull: { products: { product_id: id } } }
+        );
+
+        res.status(200).json("Product deleted successfully and removed from requests.");
     } catch (error) {
-        res.status(500).json(error.message);
+        res.status(500).json({ error: error.message });
     }
 };
+
 
 
 ////////////////////////////////////////////////////
