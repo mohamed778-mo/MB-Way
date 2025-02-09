@@ -633,15 +633,16 @@ const updateSteps = async (req, res) => {
             return res.status(403).json("You are not accessing this page!");
         }
 
-        const  id  = req.params.BuyEquipment_id;
-        const { steps } = req.body; 
+        const id = req.params.BuyEquipment_id;
+        const { steps } = req.body;
 
-     
-        const updatedForm = await BuyEquipment.findByIdAndUpdate(id, { $push: { steps: { $each: steps } } }, { new: true });
+        const updatedForm = await BuyEquipment.findByIdAndUpdate(
+            id,
+            { $push: { steps: { $each: steps } } },
+            { new: true }
+        ).populate("equipment.equipment_id");
 
-      
         if (updatedForm) {
-          
             const transporter = nodemailer.createTransport({
                 service: process.env.SERVICE,
                 host: "smtp.gmail.com",
@@ -653,37 +654,45 @@ const updateSteps = async (req, res) => {
                 },
             });
 
+            let emailContent = "<b>Equipment stages have been updated</b><p>Hello,</p>";
+
+           
+            updatedForm.steps.forEach(step => {
+                let status = '';
+                if (step.didnot_start) status = "Not started yet";
+                if (step.in_progress) status = "In progress";
+                if (step.complete) status = "Completed";
+
+                emailContent += `<p>Equipment in stage: ${status}</p>`;
+                if (step.step) emailContent += `<p>Stage details: ${step.step}</p>`;
+                if (step.location) emailContent += `<p>Location: ${step.location}</p>`;
+                if (step.late_reason) emailContent += `<p>Reason for delay: ${step.late_reason}</p>`;
+            });
+
           
-           let emailContent = "<b>Equipment stages have been updated</b><p>Hello,</p>";
+            emailContent += "<h3>Equipment Details:</h3>";
+            updatedForm.equipment.forEach(item => {
+                emailContent += `<p><b>Equipment Name:</b> ${item.equipment_name}</p>`;
+                emailContent += `<p><b>Serial Number:</b> ${item.serial_number || "N/A"}</p>`;
+                emailContent += "<hr>";
+            });
 
-updatedForm.steps.forEach(step => {
-    let status = '';
-    if (step.didnot_start) status = "Not started yet";
-    if (step.in_progress) status = "In progress";
-    if (step.complete) status = "Completed";
+            const info = await transporter.sendMail({
+                from: process.env.USER_EMAIL,
+                to: updatedForm.email,
+                subject: "Equipment Status Update",
+                html: emailContent,
+            });
 
-    emailContent += `<p>Equipment in stage: ${status}</p>`;
-    if (step.step) emailContent += `<p>Stage details: ${step.step}</p>`;
-    if (step.location) emailContent += `<p>Location: ${step.location}</p>`;
-    if (step.late_reason) emailContent += `<p>Reason for delay: ${step.late_reason}</p>`;
-});
-
-const info = await transporter.sendMail({
-    from: process.env.USER_EMAIL,
-    to: updatedForm.email,
-    subject: "Equipment Status Update",
-    html: emailContent,
-});
-
-res.status(200).json("Stages updated and email sent successfully.");
-} else {
-res.status(404).json("Equipment not found");
-}
-        
+            res.status(200).json("Stages updated and email sent successfully.");
+        } else {
+            res.status(404).json("Equipment not found");
+        }
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 };
+
 
 const deleteStepsForEquipment = async (req, res) => {
     try {
