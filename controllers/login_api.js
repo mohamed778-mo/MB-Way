@@ -2,6 +2,7 @@ const Admin = require("../models/admin_model");
 const Employee = require("../models/employee_model");
 const bcryptjs = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const mongoose = require("mongoose");
 
 require("dotenv").config();
 
@@ -137,4 +138,60 @@ const remove_my_account = async (req, res) => {
 };
 
 
-module.exports = { Login , getProfile , remove_my_account};
+
+const editUserData = async (req, res) => {
+  try {
+    const id = req.user._id;
+    const role = req.user.role; 
+    let userModel;
+
+  
+    if (role === "Admin") {
+      userModel = Admin;
+    } else if (role === "Employee") {
+      userModel = Employee;
+    } else {
+      return res.status(400).json("Invalid role!");
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(404).json("ID is not correct!!");
+    }
+
+    const user = await userModel.findById(id);
+    if (!user) {
+      return res.status(404).json("User not found!");
+    }
+
+
+    if (role === "Employee" && user.isBlock) {
+      return res.status(403).json("You are BLOCKED!!");
+    }
+
+   
+    if (role === "Admin" && !user.isAdmin) {
+      return res.status(403).json("Not authorized!");
+    }
+
+ 
+    let link;
+    const file = req.files?.find(f => f.fieldname === "file");
+    if (file) {
+      link = `http://localhost:3000/uploads/${file.filename}`;
+    }
+
+    
+    const updatedData = { ...req.body };
+    if (link) updatedData.photo = link;
+
+    await userModel.findByIdAndUpdate(id, updatedData, { new: true });
+
+    return res.status(200).json("Data updated successfully!");
+  } catch (e) {
+    res.status(500).json({ message: e.message });
+  }
+};
+
+
+
+module.exports = { Login , getProfile , remove_my_account , editUserData};
