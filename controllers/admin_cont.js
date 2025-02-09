@@ -167,16 +167,15 @@ const getAllEmployee = async (req, res) => {
 const editAdminData = async (req, res) => {
   try {
 
-    let user_data;
   
-  const admin=  await Admin.findById(req.user._id);
-if(!admin){
+  
+  const user_data=  await Admin.findById(req.user._id);
+if(!user_data){
 
-  user_data = await Employee.findById(req.user._id);
-}else{
-  user_data = await Admin.findById(req.user._id);
+  return res.status(400).json('not Exist!');
+ 
 }
-    if (!user_data.isManager) {
+    if (!user_data.isAdmin) {
       return res.status(400).json('not Available!');
     }
 
@@ -203,6 +202,8 @@ if(!admin){
     res.status(500).json(e.message);
   }
 };
+// admin edit his profile
+
 
 const get_all_done_tasks = async (req, res) => {
   try {
@@ -306,16 +307,14 @@ const employees_id = doneTask.employees_id
 
 const deleteEmployee = async (req, res) => {
   try {
-    let user_data;
+   
   
-  const admin=  await Admin.findById(req.user._id);
-if(!admin){
+  const user_data=  await Admin.findById(req.user._id);
+if(!user_data){
 
-  user_data = await Employee.findById(req.user._id);
-}else{
-  user_data = await Admin.findById(req.user._id);
+  return res.status(400).json('not Exist!');
 }
-    if (!user_data.isManager) {
+    if (!user_data.isAdmin) {
       return res.status(400).json('not Available!');
     }
     const  employeeId  = req.params.employee_id;
@@ -418,16 +417,14 @@ if(!admin){
 
 const edit_employee_data = async (req, res) => {
   try {
-    let user_data;
+   
 
-    const admin = await Admin.findById(req.user._id);
-    if (!admin) {
-      user_data = await Employee.findById(req.user._id);
-    } else {
-      user_data = await Admin.findById(req.user._id);
-    }
+    const user_data = await Admin.findById(req.user._id);
+    if (!user_data) {
+     return res.status(400).json("Not Exist!");
+    } 
 
-    if (!user_data.isManager) {
+    if (!user_data.isAdmin) {
       return res.status(400).json("Not Available!");
     }
 
