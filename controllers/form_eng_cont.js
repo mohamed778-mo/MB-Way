@@ -451,12 +451,18 @@ const deleteEquipment = async (req, res) => {
         }
 
         const { id } = req.params;
-
-        const equipment = await Equipment.findByIdAndDelete(id);
-
+        const equipment = await Equipment.findById(id);
         if (!equipment) {
             return res.status(404).json("Equipment not found");
         }
+        
+         await Equipment.findByIdAndDelete(id);
+
+  
+        await BuyEquipment.updateMany(
+            { "equipment.equipment_id": id },
+            { $pull: { equipment: { equipment_id: id } } }
+        );
 
         res.status(200).json("Equipment deleted successfully");
     } catch (error) {
