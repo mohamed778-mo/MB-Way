@@ -22,6 +22,7 @@ var AdminSchema = new mongoose.Schema({
     },
     national_id:{
         type:String,
+        unique:true,
       },
     BirthOD:{
         type:String,
