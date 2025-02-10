@@ -224,7 +224,9 @@ const change_my_password = async (req, res) => {
     }
 
  
-  user.password=new_password
+    user.password=new_password
+    user.passwordChangedAt = Date.now();
+    await user.save();
 
     res.status(200).json("Password Updated successfully" );
   } catch (error) {
