@@ -140,10 +140,7 @@ const markMessagesAsRead = async (req, res) => {
       { $set: { "content.$[].isRead": true } }
     );
 
-       
-        if (result.modifiedCount === 0) {
-            return res.status(404).json({ message: 'No unread messages found.' });
-        }
+      
 
     
         res.status(200).json({
