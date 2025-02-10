@@ -81,20 +81,31 @@ const getMessages = async (req, res) => {
       return res.status(400).json('Both user IDs are required.');
     }
 
-    const chats = await Chat.find({
-      $or: [
-        { sender: userIdSender, receiver: userIdReceiver },
-        { sender: userIdReceiver, receiver: userIdSender },
-      ],
-    })
-      .sort({ 'content.timestamp': -1 }) 
-      .skip((page - 1) * limit)
-      .limit(limit);
+    const chats = await Chat.aggregate([
+      {
+        $match: {
+          $or: [
+            { sender: mongoose.Types.ObjectId(userIdSender), receiver: mongoose.Types.ObjectId(userIdReceiver) },
+            { sender: mongoose.Types.ObjectId(userIdReceiver), receiver: mongoose.Types.ObjectId(userIdSender) },
+          ],
+        },
+      },
+      { $unwind: '$content' },
+      { $sort: { 'content.timestamp': -1 } },
+      { $skip: (page - 1) * limit },
+      { $limit: limit },
+      {
+        $group: {
+          _id: '$_id',
+          content: { $push: '$content' },
+        },
+      },
+    ]);
 
     const formattedChats = chats.map(chat => {
       chat.content = chat.content.map(msg => ({
         ...msg,
-        me: msg.sender === userIdSender
+        me: msg.sender.toString() === userIdSender.toString(), 
       }));
       return chat;
     });
@@ -104,9 +115,6 @@ const getMessages = async (req, res) => {
     res.status(500).json(error.message);
   }
 };
-
-
-
 
 const markMessagesAsRead = async (req, res) => {
     try {
