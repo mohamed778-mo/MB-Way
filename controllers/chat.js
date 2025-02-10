@@ -28,10 +28,13 @@ const addMessage = async (req, res) => {
     let link = file ? `http://localhost:3000/uploads/${file.filename}` : null;
 
     const messageObject = {
-      message: message, 
-      sender: senderId, 
-      me: true 
+      message: message || '',
+      sender: senderId,
+      timestamp: new Date(),
+      isRead: false,
+      attachment: link || null,
     };
+
 
     let chat = await Chat.findOne({
       $or: [
@@ -86,7 +89,7 @@ const getMessages = async (req, res) => {
         { sender: userIdReceiver, receiver: userIdSender },
       ],
     })
-      .sort({ timestamp: -1 })
+      .sort({ 'content.timestamp': -1 }) 
       .skip((page - 1) * limit)
       .limit(limit);
 
@@ -123,15 +126,13 @@ const markMessagesAsRead = async (req, res) => {
 
        
         const result = await Chat.updateMany(
-            {
-                sender: userIdSender,
-                receiver: userIdReceiver,
-                isRead: false,
-            },
-            {
-                $set: { isRead: true },
-            }
-        );
+      {
+        sender: userIdSender,
+        receiver: userIdReceiver,
+        "content.isRead": false,
+      },
+      { $set: { "content.$[].isRead": true } }
+    );
 
        
         if (result.modifiedCount === 0) {
@@ -238,6 +239,15 @@ const get_profile_by_id = async (req, res) => {
     res.status(500).json(error.message);
   }
 };
+
+
+
+
+
+
+
+
+
 
 
 
