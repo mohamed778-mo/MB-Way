@@ -650,8 +650,7 @@ const updateSteps = async (req, res) => {
 
         if (updatedForm) {
             const transporter = nodemailer.createTransport({
-                service: process.env.SERVICE,
-                host: "smtp.gmail.com",
+                host: "smtp.hostinger.com",
                 port: 465,
                 secure: true,
                 auth: {
