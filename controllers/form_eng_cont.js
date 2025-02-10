@@ -660,28 +660,56 @@ const updateSteps = async (req, res) => {
                 },
             });
 
-            let emailContent = "<b>Equipment stages have been updated</b><p>Hello,</p>";
+          let emailContent = `
+    <div style="font-family: Arial, sans-serif; color: #333; background-color: #f9f9f9; padding: 20px; border-radius: 10px;">
+        <h2 style="color: #4CAF50;">Equipment Stages Update</h2>
+        <p>Hello,</p>
+        <p>Here is the latest update on the equipment stages:</p>
+`;
 
-           
-            updatedForm.steps.forEach(step => {
-                let status = '';
-                if (step.didnot_start) status = "Not started yet";
-                if (step.in_progress) status = "In progress";
-                if (step.complete) status = "Completed";
+updatedForm.steps.forEach(step => {
+    let status = '';
+    if (step.didnot_start) status = "Not started yet";
+    if (step.in_progress) status = "In progress";
+    if (step.complete) status = "Completed";
 
-                emailContent += `<p>Equipment in stage: ${status}</p>`;
-                if (step.step) emailContent += `<p>Stage details: ${step.step}</p>`;
-                if (step.location) emailContent += `<p>Location: ${step.location}</p>`;
-                if (step.late_reason) emailContent += `<p>Reason for delay: ${step.late_reason}</p>`;
-            });
+    emailContent += `
+        <div style="background-color: #ffffff; padding: 15px; margin-bottom: 10px; border-radius: 5px; border-left: 5px solid #4CAF50;">
+            <p style="font-size: 16px; color: #4CAF50;"><b>Equipment in stage:</b> ${status}</p>
+            ${step.step ? `<p style="font-size: 14px;"><b>ℹ️ Stage details:</b> ${step.step}</p>` : ''}
+            ${step.location ? `<p style="font-size: 14px;"><b>📍 Location:</b> ${step.location}</p>` : ''}
+            ${step.late_reason ? `<p style="font-size: 14px;"><b>⏳ Reason for delay:</b> ${step.late_reason}</p>` : ''}
+        </div>
+    `;
+});
 
-          
-            emailContent += "<h3>Equipment Details:</h3>";
-            updatedForm.equipment.forEach(item => {
-                emailContent += `<p><b>Equipment Name:</b> ${item.equipment_name}</p>`;
-                emailContent += `<p><b>Serial Number:</b> ${item.serial_number || "N/A"}</p>`;
-                emailContent += "<hr>";
-            });
+emailContent += `
+    <h3 style="color: #4CAF50; margin-top: 20px;">Equipment Details:</h3>
+    <table style="width: 100%; border-collapse: collapse; background-color: #ffffff; border-radius: 5px;">
+        <thead>
+            <tr style="background-color: #4CAF50; color: #ffffff;">
+                <th style="padding: 10px; text-align: left;">Equipment Name</th>
+                <th style="padding: 10px; text-align: left;">Serial Number</th>
+            </tr>
+        </thead>
+        <tbody>
+`;
+
+updatedForm.equipment.forEach(item => {
+    emailContent += `
+        <tr style="border-bottom: 1px solid #ddd;">
+            <td style="padding: 10px;">${item.equipment_name}</td>
+            <td style="padding: 10px;">${item.serial_number || "N/A"}</td>
+        </tr>
+    `;
+});
+
+emailContent += `
+        </tbody>
+    </table>
+    <p style="margin-top: 20px; font-size: 14px; color: #777;">Thank you for using our services!</p>
+    </div>
+`;
 
             const info = await transporter.sendMail({
                 from: process.env.USER_EMAIL,
