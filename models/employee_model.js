@@ -57,7 +57,11 @@ var employeeSchema = new mongoose.Schema({
     tokens:[
         {
             type:String,
-            expires:"30d"
+            createdAt: { 
+            type: Date, 
+            default: Date.now, 
+            expires: 604800 // 7 أيام = 604800 ثانية
+        }
         }
     ],
     isManager:{
