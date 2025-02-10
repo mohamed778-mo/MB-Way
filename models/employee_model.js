@@ -26,6 +26,7 @@ var employeeSchema = new mongoose.Schema({
       },
     national_id:{
         type:String,
+        unique:true,
       },
     phone:{
         type:String,
