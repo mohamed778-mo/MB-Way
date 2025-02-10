@@ -505,15 +505,14 @@ const updateStepsForRequest = async (req, res) => {
         }
 
         const transporter = nodemailer.createTransport({
-            service: process.env.SERVICE,
-            host: "smtp.gmail.com",
-            port: 465,
-            secure: true,
-            auth: {
-                user: process.env.USER_EMAIL,
-                pass: process.env.USER_PASS,
-            },
-        });
+                host: "smtp.hostinger.com",
+                port: 465,
+                secure: true,
+                auth: {
+                    user: process.env.USER_EMAIL,
+                    pass: process.env.USER_PASS,
+                },
+            });
 
      let emailContent = `
     <div style="font-family: 'Poppins', Arial, sans-serif; color: #333; background-color: #f9f9f9; padding: 20px; border-radius: 10px;">
