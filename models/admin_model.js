@@ -20,6 +20,12 @@ var AdminSchema = new mongoose.Schema({
             }
         }
     },
+    national_id:{
+        type:String,
+      },
+    BirthOD:{
+        type:String,
+    },
     phone:{
         type:String,
         trim:true,
