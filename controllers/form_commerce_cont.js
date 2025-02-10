@@ -534,10 +534,12 @@ const updateStepsForRequest = async (req, res) => {
 requestDoc.products.forEach(product => {
     emailContent += `
         <li style="font-size: 14px; color: #333; margin-bottom: 5px;">
-            <b>🛒 ${product.product_name || "Unknown Product"}</b> -  <b>Barcode:</b> <h3 style="color: #1155CE;">${product.barcode || "N/A"}</h3>
+            <b>🛒 ${product.product_name || "Unknown Product"}</b> -  
+            <b>Barcode:</b> <span style="color: #1155CE;">${product.barcode || "N/A"}</span>
         </li>
     `;
 });
+
 
 emailContent += `
             </ul>
