@@ -21,16 +21,8 @@ let ProductsSchema = new mongoose.Schema({
     products_type: {
         type: String,
     },
-   available_colors: [{
-        color: {
-            type: String,
-        },
-    }],
-    available_size: [{
-        size: {
-            type: String,
-        },
-    }],
+    available_colors: [String], 
+    available_size: [String],
 
     barcode: {
         type: String,
