@@ -11,7 +11,7 @@ router.get("/get_messages/:userIdSender/:userIdReceiver",auth,getMessages)
 
 router.delete("/delete_chat/:senderId/:receiverId",auth, deleteChat)
 
-router.patch("/mark_messages_as_read/:userIdReceiver/:userIdSender",auth, markMessagesAsRead)
+router.patch("/mark_messages_as_read/:userIdSender/:userIdReceiver",auth, markMessagesAsRead)
 
 router.get("/get_all_users",auth,get_all_users)
 
