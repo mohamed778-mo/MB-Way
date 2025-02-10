@@ -51,16 +51,13 @@ const addMessage = async (req, res) => {
         senderModel: senderModel,
         receiverModel: receiverModel,
         content: [messageObject], 
-        attachment: link || undefined,
+        
       });
     } else {
       if (!Array.isArray(chat.content)) {
         chat.content = [];  
       }
 
-      if (link) {
-        chat.attachment = link; 
-      }
 
       chat.content.push(messageObject); 
     }
