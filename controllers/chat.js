@@ -33,6 +33,7 @@ const addMessage = async (req, res) => {
       timestamp: new Date(),
       isRead: false,
       attachment: link || null,
+      me: true 
     };
 
 
