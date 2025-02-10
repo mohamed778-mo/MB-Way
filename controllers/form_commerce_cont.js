@@ -520,8 +520,12 @@ const updateStepsForRequest = async (req, res) => {
            let emailContent = `
     <div style="font-family: Arial, sans-serif; color: #333; background-color: #f9f9f9; padding: 20px; border-radius: 10px;">
         <h2 style="color: #4CAF50; text-align: center;">🚚 Shipment Tracking Update</h2>
-        <p>Dear Customer,</p>
-        <p>Here is the latest update on your shipment:</p>
+        <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 18px; font-weight: 600; color: #4CAF50; margin-bottom: 10px;">
+    Dear Customer,
+</p>
+<p style="font-family: 'Poppins', Arial, sans-serif; font-size: 16px; color: #333; line-height: 1.5;">
+    Here is the latest update on your shipment:
+</p>
 `;
 
 updatedForm.products.forEach(product => {
