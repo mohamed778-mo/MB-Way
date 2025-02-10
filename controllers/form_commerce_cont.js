@@ -515,47 +515,57 @@ const updateStepsForRequest = async (req, res) => {
             },
         });
 
-        let emailContent = `
-            <div style="font-family: 'Poppins', Arial, sans-serif; color: #333; background-color: #f9f9f9; padding: 20px; border-radius: 10px;">
-                <h2 style="color: #4CAF50; text-align: center;">🚚 Shipment Tracking Update</h2>
-                <p style="font-size: 18px; font-weight: 600; color: #4CAF50; margin-bottom: 10px;">
-                    Dear Customer,
-                </p>
-                <p style="font-size: 16px; color: #333; line-height: 1.5;">
-                    Here is the latest update on your shipment:
-                </p>
-        `;
+     let emailContent = `
+    <div style="font-family: 'Poppins', Arial, sans-serif; color: #333; background-color: #f9f9f9; padding: 20px; border-radius: 10px;">
+        <h2 style="color: #4CAF50; text-align: center;">🚚 Shipment Tracking Update</h2>
+        <p style="font-size: 18px; font-weight: 600; color: #4CAF50; margin-bottom: 10px;">
+            Dear Customer,
+        </p>
+        <p style="font-size: 16px; color: #333; line-height: 1.5;">
+            Here is the latest update on your shipment:
+        </p>
 
-        requestDoc.products.forEach(product => {
-            emailContent += `
-                <div style="background-color: #ffffff; padding: 15px; margin-bottom: 10px; border-radius: 5px; border-left: 5px solid #4CAF50;">
-                    <h3 style="color: #4CAF50;">📦 ${product.product_id?.name || "Unknown Product"}</h3>
-                    <p style="font-size: 14px;"><b>🔢 Barcode:</b> ${product.product_id?.barcode || "N/A"}</p>
-                    <h4 style="color: #333; margin-top: 10px;">📍 Shipment Steps:</h4>
-            `;
+        <div style="background-color: #ffffff; padding: 15px; margin-bottom: 10px; border-radius: 5px; border-left: 5px solid #4CAF50;">
+            <h3 style="color: #4CAF50;">📦 Products in this shipment:</h3>
+            <ul>
+`;
 
-            steps.forEach(step => {
-                let status = step.didnot_start ? "Not started yet" :
-                             step.in_progress ? "In progress" :
-                             step.complete ? "Completed" : "Unknown";
 
-                emailContent += `
-                    <div style="background-color: #f1f1f1; padding: 10px; border-radius: 5px; margin-top: 5px;">
-                        <p><b>🛠 Step:</b> ${step.step}</p>
-                        <p><b>🚦 Status:</b> ${status}</p>
-                        ${step.location ? `<p><b>📌 Location:</b> ${step.location}</p>` : ''}
-                        ${step.late_reason ? `<p><b>⏳ Reason for Delay:</b> ${step.late_reason}</p>` : ''}
-                    </div>
-                `;
-            });
+requestDoc.products.forEach(product => {
+    emailContent += `
+        <li style="font-size: 14px; color: #333; margin-bottom: 5px;">
+            <b>🛒 ${product.product_name || "Unknown Product"}</b> - 🔢 Barcode: ${product.barcode || "N/A"}
+        </li>
+    `;
+});
 
-            emailContent += `</div>`;
-        });
+emailContent += `
+            </ul>
+        </div>
 
-        emailContent += `
-            <p style="margin-top: 20px; font-size: 14px; color: #777;">Thank you for choosing our service!</p>
-            </div>
-        `;
+        <h4 style="color: #333; margin-top: 10px;">📍 Shipment Steps:</h4>
+`;
+
+
+steps.forEach(step => {
+    let status = step.didnot_start ? "Not started yet" :
+                 step.in_progress ? "In progress" :
+                 step.complete ? "Completed" : "Unknown";
+
+    emailContent += `
+        <div style="background-color: #f1f1f1; padding: 10px; border-radius: 5px; margin-top: 5px;">
+            <p><b>🛠 Step:</b> ${step.step}</p>
+            <p><b>🚦 Status:</b> ${status}</p>
+            ${step.location ? `<p><b>📌 Location:</b> ${step.location}</p>` : ''}
+            ${step.late_reason ? `<p><b>⏳ Reason for Delay:</b> ${step.late_reason}</p>` : ''}
+        </div>
+    `;
+});
+
+emailContent += `
+    <p style="margin-top: 20px; font-size: 14px; color: #777;">Thank you for choosing our service!</p>
+    </div>
+`;
 
         await transporter.sendMail({
             from: process.env.USER_EMAIL,
