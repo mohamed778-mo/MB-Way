@@ -111,10 +111,17 @@ const markMessagesAsRead = async (req, res) => {
     try {
         const { userIdSender, userIdReceiver } = req.params;
 
+      
         if (!userIdSender || !userIdReceiver) {
             return res.status(400).json({ message: 'Both user IDs are required.' });
         }
 
+    
+        if (!mongoose.Types.ObjectId.isValid(userIdSender) || !mongoose.Types.ObjectId.isValid(userIdReceiver)) {
+            return res.status(400).json({ message: 'Invalid user IDs.' });
+        }
+
+       
         const result = await Chat.updateMany(
             {
                 sender: userIdSender,
@@ -126,6 +133,12 @@ const markMessagesAsRead = async (req, res) => {
             }
         );
 
+       
+        if (result.modifiedCount === 0) {
+            return res.status(404).json({ message: 'No unread messages found.' });
+        }
+
+    
         res.status(200).json({
             message: 'Messages marked as read successfully.',
             modifiedCount: result.modifiedCount,
@@ -153,16 +166,52 @@ const deleteChat = async (req, res) => {
 };
   
 
- const get_all_users = async (req, res) => {  
+const get_all_users = async (req, res) => {
     try {
+        const currentUserId = req.user._id; 
+        const currentUserModel = req.user.role === 'Admin' ? 'Admin' : 'Employee'; 
+
+     
         const admins = await Admin.find().select('_id name role photo isManager');
         const employees = await Employee.find().select('_id name role photo isManager');
-        
-        if (admins.length === 0 && employees.length === 0) {
+        const allUsers = [...admins, ...employees];
+
+        if (allUsers.length === 0) {
             return res.status(404).json({ message: 'No users found!' });
         }
 
-        res.status(200).json([...admins, ...employees]); 
+      
+        const usersWithLastMessage = await Promise.all(
+            allUsers.map(async (user) => {
+                // تجاهل المستخدم الحالي
+                if (user._id.toString() === currentUserId.toString()) {
+                    return {
+                        ...user.toObject(),
+                        lastMessage: null,
+                        isRead: true,
+                    };
+                }
+
+            
+                const lastMessage = await Chat.findOne({
+                    $or: [
+                        { sender: currentUserId, receiver: user._id },
+                        { sender: user._id, receiver: currentUserId },
+                    ],
+                })
+                    .sort({ timestamp: -1 }) // ترتيب تنازلي للحصول على آخر رسالة
+                    .select('content')
+                    .exec();
+
+                return {
+                    ...user.toObject(),
+                    lastMessage: lastMessage?.content[lastMessage.content.length - 1] || null, 
+                    isRead: lastMessage ? lastMessage.isRead : true, 
+                };
+            })
+        );
+
+        res.status(200).json(usersWithLastMessage);
     } catch (e) {
         res.status(500).json({ error: e.message });
     }
@@ -189,6 +238,9 @@ const get_profile_by_id = async (req, res) => {
     res.status(500).json(error.message);
   }
 };
+
+
+
 
 module.exports = { addMessage ,getMessages , markMessagesAsRead , deleteChat , get_all_users , get_profile_by_id};
 
