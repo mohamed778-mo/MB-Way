@@ -74,20 +74,20 @@ const getMessages = async (req, res) => {
       return res.status(400).json('Both user IDs are required.');
     }
 
-     const chats = await Chat.find({
+    const chats = await Chat.find({
       $or: [
         { sender: userIdSender, receiver: userIdReceiver },
         { sender: userIdReceiver, receiver: userIdSender },
-      ]
+      ],
     })
-      .sort({ 'content.timestamp': -1 }) 
+      .sort({ timestamp: -1 })
       .skip((page - 1) * limit)
       .limit(limit);
 
     const formattedChats = chats.map(chat => {
       chat.content = chat.content.map(msg => ({
         ...msg,
-        me: msg.sender.toString() === userIdSender
+        me: msg.sender === userIdSender
       }));
       return chat;
     });
