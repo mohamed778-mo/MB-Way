@@ -493,88 +493,84 @@ const updateStepsForRequest = async (req, res) => {
             return res.status(400).json("Tracking steps are required.");
         }
 
-       
-        const requestDoc = await Request.findById(requestId).populate("products.product_id"); 
+      
+        const requestDoc = await Request.findByIdAndUpdate(
+            requestId,
+            { $push: { steps: { $each: steps } } },
+            { new: true }
+        ).populate("products.product_id");
+
         if (!requestDoc) {
             return res.status(404).json("Request not found.");
         }
 
+        const transporter = nodemailer.createTransport({
+            service: process.env.SERVICE,
+            host: "smtp.gmail.com",
+            port: 465,
+            secure: true,
+            auth: {
+                user: process.env.USER_EMAIL,
+                pass: process.env.USER_PASS,
+            },
+        });
 
-        const updatedForm = await Request.findByIdAndUpdate(requestId, { 
-            $push: { steps: { $each: steps } } 
-        }, { new: true }).populate("products.product_id"); 
+        let emailContent = `
+            <div style="font-family: 'Poppins', Arial, sans-serif; color: #333; background-color: #f9f9f9; padding: 20px; border-radius: 10px;">
+                <h2 style="color: #4CAF50; text-align: center;">🚚 Shipment Tracking Update</h2>
+                <p style="font-size: 18px; font-weight: 600; color: #4CAF50; margin-bottom: 10px;">
+                    Dear Customer,
+                </p>
+                <p style="font-size: 16px; color: #333; line-height: 1.5;">
+                    Here is the latest update on your shipment:
+                </p>
+        `;
 
-        if (updatedForm) {
-            const transporter = nodemailer.createTransport({
-                service: process.env.SERVICE,
-                host: "smtp.gmail.com",
-                port: 465,
-                secure: true,
-                auth: {
-                    user: process.env.USER_EMAIL,
-                    pass: process.env.USER_PASS,
-                },
+        requestDoc.products.forEach(product => {
+            emailContent += `
+                <div style="background-color: #ffffff; padding: 15px; margin-bottom: 10px; border-radius: 5px; border-left: 5px solid #4CAF50;">
+                    <h3 style="color: #4CAF50;">📦 ${product.product_id?.name || "Unknown Product"}</h3>
+                    <p style="font-size: 14px;"><b>🔢 Barcode:</b> ${product.product_id?.barcode || "N/A"}</p>
+                    <h4 style="color: #333; margin-top: 10px;">📍 Shipment Steps:</h4>
+            `;
+
+            steps.forEach(step => {
+                let status = step.didnot_start ? "Not started yet" :
+                             step.in_progress ? "In progress" :
+                             step.complete ? "Completed" : "Unknown";
+
+                emailContent += `
+                    <div style="background-color: #f1f1f1; padding: 10px; border-radius: 5px; margin-top: 5px;">
+                        <p><b>🛠 Step:</b> ${step.step}</p>
+                        <p><b>🚦 Status:</b> ${status}</p>
+                        ${step.location ? `<p><b>📌 Location:</b> ${step.location}</p>` : ''}
+                        ${step.late_reason ? `<p><b>⏳ Reason for Delay:</b> ${step.late_reason}</p>` : ''}
+                    </div>
+                `;
             });
 
-            
-           let emailContent = `
-    <div style="font-family: Arial, sans-serif; color: #333; background-color: #f9f9f9; padding: 20px; border-radius: 10px;">
-        <h2 style="color: #4CAF50; text-align: center;">🚚 Shipment Tracking Update</h2>
-        <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 18px; font-weight: 600; color: #4CAF50; margin-bottom: 10px;">
-    Dear Customer,
-</p>
-<p style="font-family: 'Poppins', Arial, sans-serif; font-size: 16px; color: #333; line-height: 1.5;">
-    Here is the latest update on your shipment:
-</p>
-`;
-
-updatedForm.products.forEach(product => {
-    emailContent += `
-        <div style="background-color: #ffffff; padding: 15px; margin-bottom: 10px; border-radius: 5px; border-left: 5px solid #4CAF50;">
-            <h3 style="color: #4CAF50;">📦 ${product.product_name}</h3>
-            <p style="font-size: 14px;"><b>🔢 Barcode:</b> ${product.barcode}</p>
-            <h4 style="color: #333; margin-top: 10px;">📍 Shipment Steps:</h4>
-    `;
-
-    product.steps.forEach(step => {
-        let status = step.didnot_start ? "Not started yet" :
-                     step.in_progress ? "In progress" :
-                     step.complete ? "Completed" : "Unknown";
+            emailContent += `</div>`;
+        });
 
         emailContent += `
-            <div style="background-color: #f1f1f1; padding: 10px; border-radius: 5px; margin-top: 5px;">
-                <p><b>🛠 Step:</b> ${step.step}</p>
-                <p><b>🚦 Status:</b> ${status}</p>
-                ${step.location ? `<p><b>📌 Location:</b> ${step.location}</p>` : ''}
-                ${step.late_reason ? `<p><b>⏳ Reason for Delay:</b> ${step.late_reason}</p>` : ''}
+            <p style="margin-top: 20px; font-size: 14px; color: #777;">Thank you for choosing our service!</p>
             </div>
         `;
-    });
 
-    emailContent += `</div>`;
-});
+        await transporter.sendMail({
+            from: process.env.USER_EMAIL,
+            to: requestDoc.user?.email || requestDoc.email, 
+            subject: "Shipment Tracking Update",
+            html: emailContent,
+        });
 
-emailContent += `
-    <p style="margin-top: 20px; font-size: 14px; color: #777;">Thank you for choosing our service!</p>
-    </div>
-`;
-
-
-            await transporter.sendMail({
-                from: process.env.USER_EMAIL,
-                to: requestDoc.email,
-                subject: "Shipment Tracking Update",
-                html: emailContent,
-            });
-
-            res.status(200).json("Tracking steps updated and email sent successfully.");
-        } else {
-            res.status(404).json("Request not found.");
-        }
+        res.status(200).json("Tracking steps updated and email sent successfully.");
     } catch (error) {
+        console.error("Error updating tracking steps:", error);
         res.status(500).json({ message: error.message });
     }
 };
+
 
 
   const deleteStepsForRequest = async (req, res) => {
