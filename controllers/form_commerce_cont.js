@@ -24,19 +24,28 @@ const createProduct = async (req, res) => {
             brand,
         } = req.body;
 
-    
+
         const productImageFile = req.files?.find(f => f.fieldname === 'image');
         const imageUrl = productImageFile ? `http://localhost:3000/uploads/${productImageFile.filename}` : null;
 
-     
+       
+        const colorsArray = typeof available_colors === 'string' 
+            ? JSON.parse(available_colors.replace(/'/g, '"')) 
+            : available_colors || [];
+
+        const sizesArray = typeof available_size === 'string' 
+            ? JSON.parse(available_size.replace(/'/g, '"')) 
+            : available_size || [];
+
+      
         const newProduct = new Product({
             product_name,
             image: imageUrl,
             quantity,
             price,
             products_type,
-            available_colors: available_colors || [], 
-            available_size: available_size || [],
+            available_colors: colorsArray,
+            available_size: sizesArray,
             barcode,
             warranty,
             additional_features,
@@ -101,13 +110,13 @@ const updateProduct = async (req, res) => {
             updatedData.image = `http://localhost:3000/uploads/${productImageFile.filename}`;
         }
 
-   
-        if (updatedData.available_colors && !Array.isArray(updatedData.available_colors)) {
-            updatedData.available_colors = [updatedData.available_colors];
+        if (updatedData.available_colors && typeof updatedData.available_colors === 'string') {
+            updatedData.available_colors = JSON.parse(updatedData.available_colors.replace(/'/g, '"'));
         }
-        if (updatedData.available_size && !Array.isArray(updatedData.available_size)) {
-            updatedData.available_size = [updatedData.available_size]; 
+        if (updatedData.available_size && typeof updatedData.available_size === 'string') {
+            updatedData.available_size = JSON.parse(updatedData.available_size.replace(/'/g, '"'));
         }
+
 
         const product = await Product.findByIdAndUpdate(id, updatedData, { new: true });
 
