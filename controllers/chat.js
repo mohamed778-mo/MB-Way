@@ -169,7 +169,28 @@ const deleteChat = async (req, res) => {
 };
 
 
-module.exports = { addMessage ,getMessages,markMessagesAsRead,deleteChat,get_all_users};
+const get_profile_by_id = async (req, res) => {
+  try {
+    const user_id = req.params.user_id;
+
+
+    let user;
+   
+      user = await Admin.findById(user_id).select("name photo"); 
+     if (!user) {
+      user = await Employee.findById(user_id).select("name photo");
+    } else {
+      return res.status(404).json("User Not Exist!");
+    }
+
+
+    res.status(200).json( user );
+  } catch (error) {
+    res.status(500).json(error.message);
+  }
+};
+
+module.exports = { addMessage ,getMessages , markMessagesAsRead , deleteChat , get_all_users , get_profile_by_id};
 
 
 
