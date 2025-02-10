@@ -131,9 +131,9 @@ const remove_my_account = async (req, res) => {
  
     await userModel.findByIdAndDelete(userId);
 
-    res.status(200).json({ message: "Account deleted successfully" });
+    res.status(200).json( "Account deleted successfully" );
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json( error.message );
   }
 };
 
@@ -188,10 +188,50 @@ const editUserData = async (req, res) => {
 
     return res.status(200).json("Data updated successfully!");
   } catch (e) {
-    res.status(500).json({ message: e.message });
+    res.status(500).json( e.message );
   }
 };
 
 
 
-module.exports = { Login , getProfile , remove_my_account , editUserData};
+const change_my_password = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const role = req.user.role;
+    const old_password = req.body.old_password;
+    const new_password = req.body.new_password;
+
+
+    let userModel;
+    if (role === "Admin") {
+      userModel = Admin;
+    } else if (role === "Employee") {
+      userModel = Employee;
+    } else {
+      return res.status(400).json("Invalid role");
+    }
+
+
+    const user = await userModel.findById(userId);
+    if (!user) {
+      return res.status(404).json("User not found");
+    }
+
+  
+    const isPasswordCorrect = await bcryptjs.compare(old_password, user.password);
+    if (!isPasswordCorrect) {
+      return res.status(400).json("Password not correct!");
+    }
+
+ 
+  user.password=new_password
+
+    res.status(200).json("Password Updated successfully" );
+  } catch (error) {
+    res.status(500).json( error.message );
+  }
+};
+
+
+
+module.exports = { Login , getProfile , remove_my_account , editUserData , change_my_password};
