@@ -22,15 +22,10 @@ var chatSchema = new mongoose.Schema({
         required: true,
         enum: ['Employee', 'Admin'], 
     },
-     content: [{
-    message: String,
-    timestamp: { type: Date, default: Date.now },
-    isRead: { type: Boolean, default: false },
-    attachment: String,
-    sender: mongoose.Schema.Types.ObjectId,
-    me:Boolean
-    
-  }],
+     content: {
+        type: Array,
+        default: []
+    }, 
     timestamp: {
         type: Date,
         default: Date.now,
