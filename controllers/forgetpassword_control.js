@@ -35,15 +35,14 @@ const forgetPassword = async (req, res) => {
       await foundUser.save();
 
       const transporter = nodemailer.createTransport({
-          host: "smtp.gmail.com",
-          port: 465,
-          service: process.env.SERVICE,
-          secure: true,
-          auth: {
-              user: process.env.USER_EMAIL,
-              pass: process.env.USER_PASS,
-          },
-      });
+                host: "smtp.hostinger.com",
+                port: 465,
+                secure: true,
+                auth: {
+                    user: process.env.USER_EMAIL,
+                    pass: process.env.USER_PASS,
+                },
+            });
 
       const Message = `http://localhost:3000/app/user/resetpassword/${token}`;
 
