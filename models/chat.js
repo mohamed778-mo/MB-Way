@@ -27,7 +27,7 @@ var chatSchema = new mongoose.Schema({
     timestamp: { type: Date, default: Date.now },
     isRead: { type: Boolean, default: false },
     attachment: String,
-    sender: String,
+    sender: mongoose.Schema.Types.ObjectId,
     me: Boolean 
   }],
     timestamp: {
