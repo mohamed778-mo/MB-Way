@@ -663,8 +663,12 @@ const updateSteps = async (req, res) => {
           let emailContent = `
     <div style="font-family: Arial, sans-serif; color: #333; background-color: #f9f9f9; padding: 20px; border-radius: 10px;">
         <h2 style="color: #4CAF50;">Equipment Stages Update</h2>
-        <p>Hello,</p>
-        <p>Here is the latest update on the equipment stages:</p>
+<p style="font-family: 'Poppins', Arial, sans-serif; font-size: 16px; color: #333; line-height: 1.5;">
+    Hello,
+</p>
+<p style="font-family: 'Poppins', Arial, sans-serif; font-size: 16px; color: #333; line-height: 1.5;">
+    Here is the latest update on the equipment stages:
+</p>
 `;
 
 updatedForm.steps.forEach(step => {
