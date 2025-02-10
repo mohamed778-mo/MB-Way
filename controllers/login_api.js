@@ -184,7 +184,9 @@ const editUserData = async (req, res) => {
     const updatedData = { ...req.body };
     if (link) updatedData.photo = link;
 
-    await userModel.findByIdAndUpdate(id, updatedData, { new: true });
+    const new_data_user = await userModel.findByIdAndUpdate(id, updatedData, { new: true });
+    
+    await new_data_user.save()
 
     return res.status(200).json("Data updated successfully!");
   } catch (e) {
