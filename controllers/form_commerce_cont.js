@@ -517,26 +517,44 @@ const updateStepsForRequest = async (req, res) => {
             });
 
             
-            let emailContent = "<b>Your shipment tracking has been updated</b><p>Dear Customer,</p>";
-            
-            updatedForm.products.forEach(product => {
-                emailContent += `<p><strong>Product Name:</strong> ${product.product_name}</p>`;
-                emailContent += `<p><strong>Barcode:</strong> ${product.barcode}</p>`;
-                
-                steps.forEach(step => {
-                    let status = step.didnot_start ? "Not started yet" :
-                                 step.in_progress ? "In progress" :
-                                 step.complete ? "Completed" : "Unknown";
+           let emailContent = `
+    <div style="font-family: Arial, sans-serif; color: #333; background-color: #f9f9f9; padding: 20px; border-radius: 10px;">
+        <h2 style="color: #4CAF50; text-align: center;">🚚 Shipment Tracking Update</h2>
+        <p>Dear Customer,</p>
+        <p>Here is the latest update on your shipment:</p>
+`;
 
-                    emailContent += `<p>📍 <strong>Step:</strong> ${step.step} - <strong>Status:</strong> ${status}</p>`;
-                    if (step.location) emailContent += `<p>📌 <strong>Location:</strong> ${step.location}</p>`;
-                    if (step.late_reason) emailContent += `<p>⏳ <strong>Late reason:</strong> ${step.late_reason}</p>`;
-                });
+updatedForm.products.forEach(product => {
+    emailContent += `
+        <div style="background-color: #ffffff; padding: 15px; margin-bottom: 10px; border-radius: 5px; border-left: 5px solid #4CAF50;">
+            <h3 style="color: #4CAF50;">📦 ${product.product_name}</h3>
+            <p style="font-size: 14px;"><b>🔢 Barcode:</b> ${product.barcode}</p>
+            <h4 style="color: #333; margin-top: 10px;">📍 Shipment Steps:</h4>
+    `;
 
-                emailContent += `<hr/>`; 
-            });
+    product.steps.forEach(step => {
+        let status = step.didnot_start ? "Not started yet" :
+                     step.in_progress ? "In progress" :
+                     step.complete ? "Completed" : "Unknown";
 
-            emailContent += "<p>Thank you for choosing our service.</p>";
+        emailContent += `
+            <div style="background-color: #f1f1f1; padding: 10px; border-radius: 5px; margin-top: 5px;">
+                <p><b>🛠 Step:</b> ${step.step}</p>
+                <p><b>🚦 Status:</b> ${status}</p>
+                ${step.location ? `<p><b>📌 Location:</b> ${step.location}</p>` : ''}
+                ${step.late_reason ? `<p><b>⏳ Reason for Delay:</b> ${step.late_reason}</p>` : ''}
+            </div>
+        `;
+    });
+
+    emailContent += `</div>`;
+});
+
+emailContent += `
+    <p style="margin-top: 20px; font-size: 14px; color: #777;">Thank you for choosing our service!</p>
+    </div>
+`;
+
 
             await transporter.sendMail({
                 from: process.env.USER_EMAIL,
