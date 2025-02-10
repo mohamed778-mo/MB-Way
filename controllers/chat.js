@@ -33,9 +33,7 @@ const addMessage = async (req, res) => {
       timestamp: new Date(),
       isRead: false,
       attachment: link || null,
-      me: true 
     };
-
 
     let chat = await Chat.findOne({
       $or: [
@@ -48,18 +46,12 @@ const addMessage = async (req, res) => {
       chat = new Chat({
         sender: senderId,
         receiver: receiverId,
-        senderModel: senderModel,
-        receiverModel: receiverModel,
-        content: [messageObject], 
-        
+        senderModel: sender.role,
+        receiverModel: receiver.role,
+        content: [messageObject],
       });
     } else {
-      if (!Array.isArray(chat.content)) {
-        chat.content = [];  
-      }
-
-
-      chat.content.push(messageObject); 
+      chat.content.push(messageObject);
     }
 
     await chat.save();
@@ -81,31 +73,20 @@ const getMessages = async (req, res) => {
       return res.status(400).json('Both user IDs are required.');
     }
 
-    const chats = await Chat.aggregate([
-      {
-        $match: {
-          $or: [
-            { sender: mongoose.Types.ObjectId(userIdSender), receiver: mongoose.Types.ObjectId(userIdReceiver) },
-            { sender: mongoose.Types.ObjectId(userIdReceiver), receiver: mongoose.Types.ObjectId(userIdSender) },
-          ],
-        },
-      },
-      { $unwind: '$content' },
-      { $sort: { 'content.timestamp': -1 } },
-      { $skip: (page - 1) * limit },
-      { $limit: limit },
-      {
-        $group: {
-          _id: '$_id',
-          content: { $push: '$content' },
-        },
-      },
-    ]);
+     const chats = await Chat.find({
+      $or: [
+        { sender: userIdSender, receiver: userIdReceiver },
+        { sender: userIdReceiver, receiver: userIdSender },
+      ]
+    })
+      .sort({ 'content.timestamp': -1 }) 
+      .skip((page - 1) * limit)
+      .limit(limit);
 
     const formattedChats = chats.map(chat => {
       chat.content = chat.content.map(msg => ({
         ...msg,
-        me: msg.sender.toString() === userIdSender.toString(), 
+        me: msg.sender.toString() === userIdSender
       }));
       return chat;
     });
@@ -140,7 +121,6 @@ const markMessagesAsRead = async (req, res) => {
       { $set: { "content.$[].isRead": true } }
     );
 
-      
 
     
         res.status(200).json({
